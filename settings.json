@@ -1,0 +1,99 @@
+{
+  "enableAgentTeams": true,
+  "teammateMode": "manual",
+  "maxTeammates": 4,
+  "strictMode": true,
+  
+  "modelProvider": {
+    "type": "wolfai",
+    "providerName": "WolfAI",
+    "baseURL": "https://wolfai.top/v1",
+    "availableModels": {
+      "gpt-5.2": "GPT-5.2",
+      "gpt-5.3-codex": "GPT-5.3-Codex",
+      "claude-opus-4-6-thinking": "Claude-4.6-Opus-Thinking",
+      "claude-sonnet-4-5": "Claude-4.5-Sonnet",
+      "glm-4.7": "GLM-4.7",
+      "glm-5": "GLM-5",
+      "minimax-m2.5": "Minimax-M2.5",
+      "kimi-k2-0905": "Kimi-K2-0905",
+      "kimi-k2.5": "Kimi-K2.5",
+      "qwen3-next-80b-a3b-instruct": "Qwen3-Next-80B",
+      "gemini-3-pro": "Gemini-3-Pro",
+      "grok-code-fast-1": "Grok-Code-Fast-1"
+    }
+  },
+  
+  "modelConfig": {
+    "default": "wolfai/claude-opus-4-6-thinking",
+    "roles": {
+      "总编": "wolfai/claude-opus-4-6-thinking",
+      "研究员": "wolfai/gpt-5.2",
+      "写手": "wolfai/kimi-k2.5",
+      "编辑": "wolfai/glm-4.7"
+    },
+    "fallback": "wolfai/glm-4.7"
+  },
+  
+  "teammates": [
+    {
+      "name": "总编",
+      "role": "lead",
+      "model": "wolfai/claude-opus-4-6-thinking",
+      "delegateMode": true,
+      "skill": null,
+      "responsibility": ["全局把控", "组织讨论", "汇总决策", "章节控制", "读者反馈", "双重确认"]
+    },
+    {
+      "name": "研究员",
+      "role": "researcher",
+      "model": "wolfai/gpt-5.2",
+      "skill": "researcher-skill",
+      "responsibility": ["市场调研", "创意建议", "参与讨论", "读者反馈"]
+    },
+    {
+      "name": "写手",
+      "role": "writer", 
+      "model": "wolfai/kimi-k2.5",
+      "skill": "writer-skill",
+      "responsibility": ["按方案写作", "长记忆维护", "参与讨论"]
+    },
+    {
+      "name": "编辑",
+      "role": "editor",
+      "model": "wolfai/glm-4.7",
+      "skill": "editor-skill",
+      "responsibility": ["设定一致性检查", "审核打回", "参与讨论"]
+    }
+  ],
+  
+  "qualityGates": {
+    "需求确认": { "approver": "总编", "required": ["requirements.md"] },
+    "研究审批": { "approver": "总编", "required": ["research-brief.md", "creative-suggestions.md"] },
+    "全员讨论": { "approver": "全员", "required": ["discussion-XX.md"] },
+    "设定定稿": { "approver": "总编+用户", "required": ["outline.md", "world.md", "characters.md", "skills.md", "chapter-plan.md"] },
+    "章节审核": { "approver": "编辑+总编", "trigger": "每5章" },
+    "读者反馈": { "approver": "总编", "trigger": "每20章" },
+    "终审交付": { "approver": "总编+用户" }
+  },
+  
+  "longMemory": {
+    "enabled": true,
+    "file": "chapter-summary.md",
+    "reviewBefore": 5
+  },
+  
+  "readerFeedback": {
+    "trigger": "每20章",
+    "executor": "研究员"
+  },
+  
+  "monitoring": {
+    "enabled": true,
+    "budget": {
+      "perChapter": 2.00,
+      "perBatch": 10.00,
+      "total": 500.00
+    }
+  }
+}

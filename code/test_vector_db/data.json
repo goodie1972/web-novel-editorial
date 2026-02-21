@@ -1,0 +1,35 @@
+[
+  {
+    "collection": "characters",
+    "document": "林诗雨，女，17岁，主角的妹妹，学生，活泼可爱",
+    "metadata": {
+      "type": "character",
+      "name": "林诗雨",
+      "chapter": 1,
+      "role": "女主"
+    },
+    "timestamp": "2026-02-17T20:22:22.582035"
+  },
+  {
+    "collection": "characters",
+    "document": "叶尘，男，18岁，主角，江城大学学生",
+    "metadata": {
+      "type": "character",
+      "name": "叶尘",
+      "chapter": 1,
+      "role": "主角"
+    },
+    "timestamp": "2026-02-17T20:22:22.584329"
+  },
+  {
+    "collection": "characters",
+    "document": "苏雨晴，女配，校花，天才少女",
+    "metadata": {
+      "type": "character",
+      "name": "苏雨晴",
+      "chapter": 3,
+      "role": "女配"
+    },
+    "timestamp": "2026-02-17T20:22:22.585781"
+  }
+]
