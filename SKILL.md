@@ -10,6 +10,17 @@ description: |
   - 生成可发布到起点/番茄/七猫的内容
   
   团队角色：总编（协调）、研究员（素材调研）、写手（撰写）、编辑（审核）
+  
+  ## 快捷命令
+  
+  | 命令 | 说明 |
+  |------|------|
+  | /config-model [角色] [模型] | 配置角色的大模型（总编/调研员/写手/编辑） |
+  | /show-models | 查看当前模型配置 |
+  | /list-models | 列出可用模型 |
+  | /new [题材] | 创建新网文项目 |
+  | /continue | 继续当前项目 |
+  | /status | 查看项目进度 |
 ---
 
 # 网文编辑部
@@ -30,6 +41,8 @@ description: |
 
 在使用团队之前，必须先配置各成员使用的大模型。
 
+团队角色：总编、调研员、写手、编辑
+
 ### 首次配置提示
 
 **当检测到模型配置未完成时，必须先提示用户配置：**
@@ -44,11 +57,13 @@ description: |
 /config-model 总编 [模型名]
 /config-model 调研员 [模型名]  
 /config-model 写手 [模型名]
+/config-model 编辑 [模型名]
 
 示例：
 /config-model 总编 claude-opus-4-20250514
 /config-model 写手 gpt-4-turbo
 /config-model 调研员 gemini-1.5-pro
+/config-model 编辑 claude-sonnet-4-20250514
 ```
 
 ### 配置命令
@@ -67,6 +82,7 @@ description: |
 | 总编 | claude-opus-4-20250514 |
 | 调研员 | gemini-1.5-pro |
 | 写手 | gpt-4-turbo |
+| 编辑 | claude-sonnet-4-20250514 |
 
 详细配置见 [settings/model-config.md](settings/model-config.md)
 
