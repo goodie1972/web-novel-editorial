@@ -26,6 +26,52 @@ description: |
 
 **继续项目**：告诉我项目位置，自动检测进度
 
+## 模型配置（首次使用必须⭐）
+
+在使用团队之前，必须先配置各成员使用的大模型。
+
+### 首次配置提示
+
+**当检测到模型配置未完成时，必须先提示用户配置：**
+
+```
+⚠️ 模型配置未完成！
+
+在使用团队之前，请先配置各成员使用的大模型。
+
+请使用以下命令配置：
+
+/config-model 总编 [模型名]
+/config-model 调研员 [模型名]  
+/config-model 写手 [模型名]
+
+示例：
+/config-model 总编 claude-opus-4-20250514
+/config-model 写手 gpt-4-turbo
+/config-model 调研员 gemini-1.5-pro
+```
+
+### 配置命令
+
+| 命令 | 说明 |
+|------|------|
+| `/config-model [角色] [模型]` | 配置特定角色的模型 |
+| `/config-model all [模型]` | 所有角色使用同一模型 |
+| `/show-models` | 查看当前配置 |
+| `/list-models` | 列出可用模型 |
+
+### 推荐配置
+
+| 角色 | 推荐模型 |
+|------|----------|
+| 总编 | claude-opus-4-20250514 |
+| 调研员 | gemini-1.5-pro |
+| 写手 | gpt-4-turbo |
+
+详细配置见 [settings/model-config.md](settings/model-config.md)
+
+---
+
 ## 记忆库（核心⭐）
 
 编辑部使用 Chroma 向量数据库作为记忆库，实现长记忆和资料一致性。
