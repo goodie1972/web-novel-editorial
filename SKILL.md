@@ -95,6 +95,7 @@ description: |
 | 文档 | 内容 |
 |------|------|
 | [工作流程](CLAUDE.md) | 7阶段流程、角色规则、质量门 |
+| [流程检查清单](references/流程检查清单.md) | 每阶段必检项（必须执行⭐） |
 | [大纲保障](references/大纲遵循保障.md) | 防止写飞的保障机制 |
 | [写作方法论](references/methodology.md) | 爽点设计、节奏架构 |
 | [审核清单](skills/editor-skill/checklist.md) | 章节审核标准（含AI检测） |
