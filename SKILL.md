@@ -40,47 +40,55 @@ description: |
 
 **继续项目**：告诉我项目位置，或使用 `/continue` 自动检测进度
 
-## 模型配置（首次使用必须⭐）
+## 模型配置
 
-在使用团队之前，必须先配置各成员使用的大模型。
+### 首次配置流程（在新机器上首次使用）
 
-团队角色：总编、调研员、写手、编辑
+**当 skill 启动时，按以下步骤配置：**
+
+```
+1. 检查 settings.json 中的 modelConfig.roles 是否有配置
+2. 检查 settings/model-config.md 中的角色模型分配是否完成
+3. 如果未配置：
+   - 读取 opencode.json 获取可用模型列表
+   - 列出可用模型，让用户一一选择
+   - 将选择写入 settings.json 和 model-config.md
+```
 
 ### 首次配置提示
 
-**当检测到模型配置未完成时，必须先提示用户配置：**
+**当检测到模型未配置时，提示用户：**
 
 ```
 ⚠️ 模型配置未完成！
 
-在使用团队之前，请先配置各成员使用的大模型。
+请为各角色选择大模型：
 
-步骤：
-1. 请先告诉系统您有哪些可用的模型？
-   例如：我有 claude-3-5-sonnet、gpt-4、gpt-4-turbo
+当前可用模型：
+1. gpt-5.2 - GPT-5.2
+2. claude-opus-4-6-thinking - Claude-Opus-4.6-Thinking
+3. kimi-k2.5 - Kimi-K2.5
+4. glm-4.7 - GLM-4.7
+...
 
-2. 然后为各角色选择模型：
-   /config-model 总编
-   /config-model 调研员
-   /config-model 写手
-   /config-model 编辑
+请选择总编的模型（输入编号）：[ ]
 ```
+
+### 配置位置
+
+- **可用模型来源**：`C:\Users\Bobo\.config\opencode\opencode.json` → `provider.wolfai.models`
+- **配置存储**：`settings.json` → `modelConfig.roles`
+
+### 查看配置
+
+使用 `/show-models` 查看当前各角色的模型配置。
 
 ### 配置命令
 
 | 命令 | 说明 |
 |------|------|
-| `/config-model` | 配置可用模型列表，或为角色选择模型 |
-| `/show-models` | 查看当前配置 |
-| `/list-models` | 列出当前配置的可用模型 |
-
-### 配置步骤
-
-1. **告诉系统您有哪些模型**
-   > 请告诉我您有哪些可用的模型？
-
-2. **为各角色选择模型**
-   > 系统会显示可用列表，请选择
+| `/show-models` | 查看当前模型配置 |
+| `/list-models` | 列出所有可用模型 |
 
 详细配置见 [settings/model-config.md](settings/model-config.md)
 
