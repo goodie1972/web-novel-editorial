@@ -17,7 +17,8 @@
 | 命令 | 说明 |
 |------|------|
 | `/help` | 显示帮助信息 |
-| `/config-model [角色] [模型]` | 更改特定角色的模型 |
+| `/init` | 首次使用，批量初始化所有角色的模型 |
+| `/config-model [角色] [模型]` | 更改单个角色的模型 |
 | `/show-models` | 查看当前模型配置 |
 | `/list-models` | 列出所有可用模型 |
 
@@ -42,29 +43,30 @@
 
 ---
 
-## 模型配置（首次使用）
+## 模型配置
 
-### 首次配置流程
-
-1. **skill 自动检测**：检查 settings.json 和 model-config.md
-2. **读取可用模型**：从 opencode.json 获取可用模型列表
-3. **用户选择**：系统显示可用模型列表，让用户为每个角色选择
-4. **自动保存**：选择结果写入 settings.json
-
-### 首次配置提示示例
+### 首次使用 - 批量初始化
 
 ```
-⚠️ 模型配置未完成！
-
-当前可用模型：
-1. gpt-5.2 - GPT-5.2
-2. claude-opus-4-6-thinking - Claude-Opus-4.6-Thinking
-3. kimi-k2.5 - Kimi-K2.5
-4. glm-4.7 - GLM-4.7
-...
-
-请选择总编的模型（输入编号）：
+/init
 ```
+
+系统会引导您为所有角色（总编、调研员、写手、编辑）依次选择模型，自动保存到配置文件。
+
+### 单独更改
+
+```
+/config-model 总编 claude-opus-4-6-thinking
+/config-model 调研员 gpt-5.2
+/config-model 写手 kimi-k2.5
+/config-model 编辑 glm-4.7
+```
+
+### 查看配置
+
+```
+/show-models   # 查看当前配置
+/list-models  # 列出可用模型
 
 ### 更改模型配置
 
