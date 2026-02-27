@@ -6,13 +6,13 @@
 
 ## 命令列表
 
-### /config-model
+### --config-model
 
 配置团队成员使用的大模型。
 
 **用法**：
 ```
-/config-model [角色] [模型名]
+--config-model [角色] [模型名]
 ```
 
 **参数**：
@@ -21,20 +21,20 @@
 
 **示例**：
 ```
-/config-model 总编 claude-opus-4-20250514
-/config-model 写手 gpt-4-turbo
-/config-model 调研员 gemini-1.5-pro
+--config-model 总编 claude-opus-4-20250514
+--config-model 写手 gpt-4-turbo
+--config-model 调研员 gemini-1.5-pro
 ```
 
 ---
 
-### /show-models
+### --show-models
 
 查看当前各角色的大模型配置。
 
 **用法**：
 ```
-/show-models
+--show-models
 ```
 
 **示例输出**：
@@ -47,13 +47,13 @@
 
 ---
 
-### /list-models
+### --list-models
 
 列出所有可用的大模型。
 
 **用法**：
 ```
-/list-models
+--list-models
 ```
 
 ---
@@ -69,12 +69,12 @@
 
 请使用以下命令配置：
 
-/config-model 总编 [模型名]
-/config-model 调研员 [模型名]  
-/config-model 写手 [模型名]
+--config-model 总编 [模型名]
+--config-model 调研员 [模型名]  
+--config-model 写手 [模型名]
 
 或者一次性配置所有角色：
-/config-model all [模型名]
+--config-model all [模型名]
 ```
 
 ---

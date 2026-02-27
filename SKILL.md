@@ -15,14 +15,14 @@ description: |
   
   | 命令 | 说明 |
   |------|------|
-  | /help | 查看所有可用命令 |
-  | /onboard | 首次使用，批量初始化模型配置 |
-  | /config-model [角色] [模型] | 更改单个角色的模型 |
-  | /show-models | 查看当前模型配置 |
-  | /list-models | 列出可用模型 |
-  | /new [题材] | 创建新网文项目 |
-  | /continue | 继续当前项目 |
-  | /status | 查看项目进度 |
+  | --help | 查看所有可用命令 |
+  | --onboard | 首次使用，批量初始化模型配置 |
+  | --config-model [角色] [模型] | 更改单个角色的模型 |
+  | --show-models | 查看当前模型配置 |
+  | --list-models | 列出可用模型 |
+  | --new [题材] | 创建新网文项目 |
+  | --continue | 继续当前项目 |
+  | --status | 查看项目进度 |
 ---
 
 # 网文编辑部
@@ -39,7 +39,7 @@ description: |
 
 **项目位置**：所有小说项目都创建在 `docs/webnovel/` 目录下
 
-**继续项目**：告诉我项目位置，或使用 `/continue` 自动检测进度
+**继续项目**：告诉我项目位置，或使用 `--continue` 自动检测进度
 
 ## 模型配置
 
@@ -63,18 +63,18 @@ description: |
 ```
 ⚠️ 模型配置未完成！
 
-请运行 /onboard 进行批量初始化配置
+请运行 --onboard 进行批量初始化配置
 
 或者手动为各角色选择大模型：
-/config-model 总编 [模型]
-/config-model 调研员 [模型]
-/config-model 写手 [模型]
-/config-model 编辑 [模型]
+--config-model 总编 [模型]
+--config-model 调研员 [模型]
+--config-model 写手 [模型]
+--config-model 编辑 [模型]
 ```
 
 **或使用批量初始化命令**：
 ```
-/onboard
+--onboard
 ```
 系统会引导您一步步为所有角色选择模型。
 
@@ -85,23 +85,23 @@ description: |
 
 ### 查看配置
 
-使用 `/show-models` 查看当前各角色的模型配置。
+使用 `--show-models` 查看当前各角色的模型配置。
 
 ### 配置命令
 
 | 命令 | 说明 |
 |------|------|
 | `/init` | 首次使用，批量初始化所有角色的模型 |
-| `/config-model [角色] [模型]` | 更改单个角色的模型 |
-| `/show-models` | 查看当前模型配置 |
-| `/list-models` | 列出所有可用模型 |
+| `--config-model [角色] [模型]` | 更改单个角色的模型 |
+| `--show-models` | 查看当前模型配置 |
+| `--list-models` | 列出所有可用模型 |
 
-### 批量初始化（/onboard）
+### 批量初始化（--onboard）
 
-使用 `/onboard` 命令重新配置所有角色：
+使用 `--onboard` 命令重新配置所有角色：
 
 ```
-/onboard
+--onboard
 ```
 
 **注意**：运行此命令会引导您为所有角色（总编→调研员→写手→编辑）依次选择模型，不管之前是否有配置。按 `esc` 取消。
@@ -113,13 +113,13 @@ description: |
 
 ### 更改模型配置
 
-已有配置后，使用 `/config-model` 命令更改：
+已有配置后，使用 `--config-model` 命令更改：
 
 ```
-/config-model 总编 claude-opus-4-6-thinking
-/config-model 调研员 gpt-5.2
-/config-model 写手 kimi-k2.5
-/config-model 编辑 glm-4.7
+--config-model 总编 claude-opus-4-6-thinking
+--config-model 调研员 gpt-5.2
+--config-model 写手 kimi-k2.5
+--config-model 编辑 glm-4.7
 ```
 
 详细配置见 [settings/model-config.md](settings/model-config.md)
