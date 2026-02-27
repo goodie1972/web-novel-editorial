@@ -1,4 +1,10 @@
-# 帮助命令
+# 帮助命令 - web-novel-editorial
+
+**当前 Skill**: 网文编辑部 (web-novel-editorial)
+
+> 💡 提示：进入 skill 后，命令栏会显示当前所在的 skill 名称
+
+---
 
 使用 `/help` 命令查看所有可用命令。
 
