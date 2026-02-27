@@ -11,6 +11,7 @@
 | 命令 | 说明 |
 |------|------|
 | `/help` | 显示帮助信息 |
+| `/config-model [角色] [模型]` | 更改特定角色的模型 |
 | `/show-models` | 查看当前模型配置 |
 | `/list-models` | 列出所有可用模型 |
 
@@ -57,6 +58,17 @@
 ...
 
 请选择总编的模型（输入编号）：
+```
+
+### 更改模型配置
+
+已有配置后，使用 `/config-model` 命令更改：
+
+```
+/config-model 总编 claude-opus-4-6-thinking
+/config-model 调研员 gpt-5.2
+/config-model 写手 kimi-k2.5
+/config-model 编辑 glm-4.7
 ```
 
 ---
