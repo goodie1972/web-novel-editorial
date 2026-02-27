@@ -16,7 +16,7 @@ description: |
   | 命令 | 说明 |
   |------|------|
   | /help | 查看所有可用命令 |
-  | /init | 首次使用，批量初始化模型配置 |
+  | /onboard | 首次使用，批量初始化模型配置 |
   | /config-model [角色] [模型] | 更改单个角色的模型 |
   | /show-models | 查看当前模型配置 |
   | /list-models | 列出可用模型 |
@@ -63,7 +63,7 @@ description: |
 ```
 ⚠️ 模型配置未完成！
 
-请运行 /init 进行批量初始化配置
+请运行 /onboard 进行批量初始化配置
 
 或者手动为各角色选择大模型：
 /config-model 总编 [模型]
@@ -74,7 +74,7 @@ description: |
 
 **或使用批量初始化命令**：
 ```
-/init
+/onboard
 ```
 系统会引导您一步步为所有角色选择模型。
 
@@ -96,12 +96,12 @@ description: |
 | `/show-models` | 查看当前模型配置 |
 | `/list-models` | 列出所有可用模型 |
 
-### 批量初始化（/init）
+### 批量初始化（/onboard）
 
-首次使用时，使用 `/init` 命令批量配置：
+首次使用时，使用 `/onboard` 命令批量配置：
 
 ```
-/init
+/onboard
 ```
 
 系统会：
