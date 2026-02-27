@@ -8,20 +8,20 @@
 
 ### 模型配置
 
-| 命令 | 说明 | 示例 |
-|------|------|------|
-| `/help` | 显示帮助信息 | `/help` |
-| `/config-model` | 配置角色的大模型 | `/config-model 写手 gpt-4-turbo` |
-| `/show-models` | 查看当前模型配置 | `/show-models` |
-| `/list-models` | 列出所有可用模型 | `/list-models` |
+| 命令 | 说明 |
+|------|------|
+| `/help` | 显示帮助信息 |
+| `/config-model` | 配置可用模型或选择角色模型 |
+| `/show-models` | 查看当前模型配置 |
+| `/list-models` | 列出配置的可用模型 |
 
 ### 项目管理
 
-| 命令 | 说明 | 示例 |
-|------|------|------|
-| `/new` | 创建新网文项目 | `/new 都市` |
-| `/continue` | 继续当前项目 | `/continue` |
-| `/status` | 查看项目进度 | `/status` |
+| 命令 | 说明 |
+|------|------|
+| `/new` | 创建新网文项目 |
+| `/continue` | 继续当前项目 |
+| `/status` | 查看项目进度 |
 
 ---
 
@@ -36,26 +36,44 @@
 
 ---
 
+## 模型配置步骤
+
+### 第一步：告诉系统您有哪些模型
+
+由于每个用户的API不同，请先告诉系统您有哪些可用的模型：
+
+> 请告诉我您有哪些可用的模型？  
+> 例如：我有 claude-3-5-sonnet-20241022、gpt-4、gpt-4-turbo
+
+### 第二步：为各角色选择模型
+
+配置好可用模型后，使用以下命令为各角色选择：
+
+```
+/config-model 总编
+/config-model 调研员
+/config-model 写手
+/config-model 编辑
+```
+
+系统会显示您配置好的可用模型列表，供您选择。
+
+---
+
 ## 快速开始
 
-1. **首次使用**：先配置模型
-   ```
-   /config-model 总编 claude-opus-4-20250514
-   /config-model 调研员 gemini-1.5-pro
-   /config-model 写手 gpt-4-turbo
-   /config-model 编辑 claude-sonnet-4-20250514
-   ```
+1. **首次使用**：先告诉系统您有哪些模型
+   > 请告诉我您有哪些可用的模型？
 
-2. **创建项目**
-   ```
-   /new 修仙
-   ```
-   项目将创建在 `docs/webnovel/` 目录下
+2. **选择角色模型**
+   > /config-model 总编（系统会显示选择列表）
 
-3. **查看状态**
-   ```
-   /status
-   ```
+3. **创建项目**
+   > /new 修仙
+   > 项目将创建在 `docs/webnovel/` 目录下
+
+4. **查看状态**
+   > /status
 
 ---
 
@@ -73,11 +91,3 @@ docs/webnovel/
 │       ├── chapter-001.md
 │       └── ...
 ```
-
----
-
-## 更多帮助
-
-- 查看模型配置：`/show-models`
-- 查看可用模型：`/list-models`
-- 继续现有项目：`/continue`

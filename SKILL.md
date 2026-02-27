@@ -55,37 +55,32 @@ description: |
 
 在使用团队之前，请先配置各成员使用的大模型。
 
-请使用以下命令配置：
+步骤：
+1. 请先告诉系统您有哪些可用的模型？
+   例如：我有 claude-3-5-sonnet、gpt-4、gpt-4-turbo
 
-/config-model 总编 [模型名]
-/config-model 调研员 [模型名]  
-/config-model 写手 [模型名]
-/config-model 编辑 [模型名]
-
-示例：
-/config-model 总编 claude-opus-4-20250514
-/config-model 写手 gpt-4-turbo
-/config-model 调研员 gemini-1.5-pro
-/config-model 编辑 claude-sonnet-4-20250514
+2. 然后为各角色选择模型：
+   /config-model 总编
+   /config-model 调研员
+   /config-model 写手
+   /config-model 编辑
 ```
 
 ### 配置命令
 
 | 命令 | 说明 |
 |------|------|
-| `/config-model [角色] [模型]` | 配置特定角色的模型 |
-| `/config-model all [模型]` | 所有角色使用同一模型 |
+| `/config-model` | 配置可用模型列表，或为角色选择模型 |
 | `/show-models` | 查看当前配置 |
-| `/list-models` | 列出可用模型 |
+| `/list-models` | 列出当前配置的可用模型 |
 
-### 推荐配置
+### 配置步骤
 
-| 角色 | 推荐模型 |
-|------|----------|
-| 总编 | claude-opus-4-20250514 |
-| 调研员 | gemini-1.5-pro |
-| 写手 | gpt-4-turbo |
-| 编辑 | claude-sonnet-4-20250514 |
+1. **告诉系统您有哪些模型**
+   > 请告诉我您有哪些可用的模型？
+
+2. **为各角色选择模型**
+   > 系统会显示可用列表，请选择
 
 详细配置见 [settings/model-config.md](settings/model-config.md)
 
