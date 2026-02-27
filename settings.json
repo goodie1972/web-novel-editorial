@@ -28,7 +28,7 @@
     "default": "wolfai/claude-opus-4-6-thinking",
     "roles": {
       "总编": "wolfai/claude-opus-4-6-thinking",
-      "研究员": "wolfai/gpt-5.2",
+      "研究员": "wolfai/minimax-m2.5",
       "写手": "wolfai/kimi-k2.5",
       "编辑": "wolfai/glm-4.7"
     },
