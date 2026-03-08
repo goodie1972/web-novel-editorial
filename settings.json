@@ -25,43 +25,43 @@
   },
   
   "modelConfig": {
-    "default": "wolfai/claude-opus-4-6-thinking",
+    "default": "bailian/glm-5",
     "roles": {
-      "总编": "wolfai/claude-opus-4-6-thinking",
-      "研究员": "wolfai/minimax-m2.5",
-      "写手": "wolfai/kimi-k2.5",
-      "编辑": "wolfai/glm-4.7"
+      "总编": "bailian/glm-5",
+      "调研员": "bailian/MiniMax-M2.5",
+      "写手": "bailian/qwen3.5-plus",
+      "编辑": "bailian/kimi-k2.5"
     },
-    "fallback": "wolfai/glm-4.7"
+    "fallback": "bailian/glm-5"
   },
   
   "teammates": [
     {
       "name": "总编",
       "role": "lead",
-      "model": "wolfai/claude-opus-4-6-thinking",
+      "model": "bailian/glm-5",
       "delegateMode": true,
       "skill": null,
       "responsibility": ["全局把控", "组织讨论", "汇总决策", "章节控制", "读者反馈", "双重确认"]
     },
     {
-      "name": "研究员",
+      "name": "调研员",
       "role": "researcher",
-      "model": "wolfai/gpt-5.2",
+      "model": "bailian/MiniMax-M2.5",
       "skill": "researcher-skill",
       "responsibility": ["市场调研", "创意建议", "参与讨论", "读者反馈"]
     },
     {
       "name": "写手",
       "role": "writer", 
-      "model": "wolfai/kimi-k2.5",
+      "model": "bailian/qwen3.5-plus",
       "skill": "writer-skill",
       "responsibility": ["按方案写作", "长记忆维护", "参与讨论"]
     },
     {
       "name": "编辑",
       "role": "editor",
-      "model": "wolfai/glm-4.7",
+      "model": "bailian/kimi-k2.5",
       "skill": "editor-skill",
       "responsibility": ["设定一致性检查", "审核打回", "参与讨论"]
     }

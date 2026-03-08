@@ -87,7 +87,7 @@
 
 2. **创建项目**
    > --new 修仙
-   > 项目将创建在 `docs/webnovel/` 目录下
+   > 项目将创建在 `Documents/webnovel/` 目录下
 
 3. **查看状态**
    > --status
@@ -96,10 +96,10 @@
 
 ## 项目位置
 
-所有小说项目都创建在 `docs/webnovel/` 子目录中，结构如下：
+所有小说项目都创建在用户文档目录下的 `webnovel/` 子目录中（Windows: `C:\Users\[用户名]\Documents\webnovel\`），结构如下：
 
 ```
-docs/webnovel/
+Documents/webnovel/
 ├── 项目名称/
 │   ├──大纲.md
 │   ├──人设.md

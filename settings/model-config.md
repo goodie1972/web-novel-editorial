@@ -64,10 +64,10 @@
 
 | 角色 | 模型ID | 模型全称 |
 |------|--------|----------|
-| 总编 | claude-opus-4-6-thinking | Claude-Opus-4.6-Thinking |
-| 调研员 | minimax-m2.5 | Minimax-M2.5 |
-| 写手 | kimi-k2.5 | Kimi-K2.5 |
-| 编辑 | glm-4.7 | GLM-4.7 |
+| 总编 | glm-5 | GLM-5 (bailian) |
+| 调研员 | MiniMax-M2.5 | Minimax-M2.5 (bailian) |
+| 写手 | qwen3.5-plus | Qwen3.5-Plus (bailian) |
+| 编辑 | kimi-k2.5 | Kimi-K2.5 (bailian) |
 
 ---
 
@@ -86,3 +86,4 @@
 |------|--------|----------|
 | 2026-02-25 | 总编 | 创建模型配置文件 |
 | 2026-02-27 | 总编 | 添加首次配置流程说明 |
+| 2026-02-28 | 总编 | 完成onboard配置，切换到bailian提供商 |

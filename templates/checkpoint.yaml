@@ -1,0 +1,103 @@
+# checkpoint-{章节号}.yaml
+chapter: 3
+timestamp: "2026-03-06T10:30:00"
+project: "项目名称"
+genre: "修仙"
+author_style: "辰东"
+
+progress:
+  completed_chapters: 3
+  current_outline_progress: "第1-5章细纲完成"
+
+# 3章审核状态（每章的元数据）
+review_status:
+  chapter_1:
+    author_title: "穿越修仙"
+    draft_time: "2026-03-06 08:00:00"
+    editor_review_time: "2026-03-06 09:30:00"
+    final_time: "2026-03-06 10:00:00"
+    word_count: 3200
+    status: "已通过"
+  chapter_2:
+    author_title: "初入宗门"
+    draft_time: "2026-03-06 10:30:00"
+    editor_review_time: "2026-03-06 12:00:00"
+    final_time: "2026-03-06 13:00:00"
+    word_count: 3500
+    status: "已通过"
+  chapter_3:
+    author_title: "神秘玉佩"
+    draft_time: "2026-03-06 14:00:00"
+    editor_review_time: "2026-03-06 15:30:00"
+    final_time: "2026-03-06 16:00:00"
+    word_count: 3100
+    status: "已通过"
+
+# 3章统一审核状态
+review_3chapters:
+  overall_status: "已通过"
+  review_time: "2026-03-06 16:30:00"
+  reviewer: "总编"
+  notes: "节奏连贯，伏笔埋入合理"
+
+total_word_count: 9800
+
+characters:
+  - name: "主角"
+    level: "筑基期"
+    location: "青云宗"
+    inventory: ["神秘玉佩", "基础功法"]
+    status: "正常"
+    
+  - name: "配角1"
+    level: "金丹期"
+    role: "师父"
+    relationship: "师徒"
+
+active_foreshadowing:
+  - id: "fp-001"
+    name: "神秘玉佩"
+    status: "已埋入"
+    chapter_introduced: 3
+    expected_recovery: "第15章"
+    description: "玉佩中藏有上古传承"
+
+  - id: "fp-002"
+    name: "身世之谜"
+    status: "已埋入"
+    chapter_introduced: 2
+    expected_recovery: "第30章"
+    description: "主角真实身份是..."
+
+recent_chapters:
+  - chapter: 1
+    title: "穿越修仙"
+    summary: "主角意外穿越到修仙世界，成为青云宗外门弟子..."
+
+  - chapter: 2
+    title: "初入宗门"
+    summary: "主角通过考验加入青云宗，获得师父青睐..."
+
+  - chapter: 3
+    title: "神秘玉佩"
+    summary: "主角在秘境中获得神秘玉佩，发现其中隐藏的秘密..."
+
+current_chapter_outline:
+  chapter: 3
+  title: "神秘玉佩"
+  key_events:
+    - "获得玉佩"
+    - "发现秘密"
+    - "埋下伏笔"
+  planned_foreshadowing:
+    - "玉佩来源"
+    - "主角身世"
+
+combat_notes: 
+  - "筑基期对战金丹期需越级挑战"
+  - "使用玉佩力量有代价"
+
+pending:
+  - "第4章：下山历练"
+  - "伏笔fp-001需要在第15章回收"
+  - "第5章安排门派大比"
