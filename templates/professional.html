@@ -1335,7 +1335,7 @@
 
             outputArea.textContent = '正在生成榜单调研...';
 
-            addRoleLog('researcher', '开始生成榜单调研<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
+            addRoleLog('chief_editor', '开始生成榜单调研<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
 
             const prompt = `作为网文榜单分析师，请针对【${genre}】类型，调研当前热门榜单作品。
 
@@ -1352,23 +1352,23 @@
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'researcher'})
+                    body: JSON.stringify({prompt, role: 'chief_editor'})
                 });
 
-                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
+                addRoleLog('chief_editor', '正在调用总编辑角色...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('ranking-research').value = result.content;
                     outputArea.textContent = '✅ 榜单调研已生成并填入';
-                    addRoleLog('researcher', '✅ 榜单调研生成完成<br><span class="response">内容已填入榜单调研框</span>', 'success', 'success');
+                    addRoleLog('chief_editor', '✅ 榜单调研生成完成<br><span class="response">内容已填入榜单调研框</span>', 'success', 'success');
                 } else {
                     outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
                 outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
@@ -1380,7 +1380,7 @@
             outputArea.textContent = '正在生成市场分析...';
 
             // 添加角色日志
-            addRoleLog('researcher', '开始生成市场分析<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
+            addRoleLog('chief_editor', '开始生成市场分析<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
 
             const prompt = `作为网文市场分析师，请针对【${genre}】类型小说进行市场分析。
 
@@ -1399,24 +1399,24 @@ ${requirements}
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'researcher'})
+                    body: JSON.stringify({prompt, role: 'chief_editor'})
                 });
 
                 // 更新角色日志状态
-                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
+                addRoleLog('chief_editor', '正在调用总编辑角色...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('market-analysis').value = result.content;
                     outputArea.textContent = '✅ 市场分析已生成并填入';
-                    addRoleLog('researcher', '✅ 市场分析生成完成<br><span class="response">内容已填入市场分析框</span>', 'success', 'success');
+                    addRoleLog('chief_editor', '✅ 市场分析生成完成<br><span class="response">内容已填入市场分析框</span>', 'success', 'success');
                 } else {
                     outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
                 outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
@@ -1425,6 +1425,9 @@ ${requirements}
             const outputArea = document.getElementById('stage2-output');
 
             outputArea.textContent = '正在生成拆文分析...';
+
+            // 添加角色日志
+            addRoleLog('chief_editor', '开始生成拆文分析<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
 
             const prompt = `作为网文拆解专家，请针对【${genre}】类型，拆解分析3部优秀作品。
 
@@ -1437,29 +1440,27 @@ ${requirements}
 
 请输出详细的拆文分析报告。`;
 
-            addRoleLog('researcher', '开始生成拆文分析', 'pending', 'pending');
-
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'researcher'})
+                    body: JSON.stringify({prompt, role: 'chief_editor'})
                 });
 
-                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
+                addRoleLog('chief_editor', '正在调用总编辑角色...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('novel-analysis').value = result.content;
                     outputArea.textContent = '✅ 拆文分析已生成并填入';
-                    addRoleLog('researcher', '✅ 拆文分析生成完成<br><span class="response">内容已填入拆文分析框</span>', 'success', 'success');
+                    addRoleLog('chief_editor', '✅ 拆文分析生成完成<br><span class="response">内容已填入拆文分析框</span>', 'success', 'success');
                 } else {
                     outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
                 outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
@@ -1475,6 +1476,9 @@ ${requirements}
             }
 
             outputArea.textContent = '正在生成创意建议...';
+
+            // 添加角色日志
+            addRoleLog('chief_editor', '开始生成创意建议', 'pending', 'pending');
 
             const prompt = `基于以下调研结果，提出创新性的创意建议：
 
@@ -1500,21 +1504,23 @@ ${analysis}
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'researcher'})
+                    body: JSON.stringify({prompt, role: 'chief_editor'})
                 });
+
+                addRoleLog('chief_editor', '正在调用总编辑角色...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('creative-suggestions').value = result.content;
                     outputArea.textContent = '✅ 创意建议已生成并填入';
-                    addRoleLog('researcher', '✅ 创意建议生成完成', 'success', 'success');
+                    addRoleLog('chief_editor', '✅ 创意建议生成完成<br><span class="response">内容已填入创意建议框</span>', 'success', 'success');
                 } else {
                     outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
                 outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
