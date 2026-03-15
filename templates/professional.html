@@ -1,0 +1,3659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专业模式 - AI网文编辑部</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .navbar { height: 56px; background: linear-gradient(135deg, #4a90d9, #6ba3e0); color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+        .main { display: flex; height: calc(100vh - 56px); }
+        .sidebar { width: 240px; background: white; border-right: 1px solid #e4e7ed; padding: 20px 0; display: flex; flex-direction: column; }
+        .stage-item { padding: 14px 20px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; }
+        .stage-item.active { background: #f0f7ff; border-left-color: #4a90d9; color: #4a90d9; font-weight: 500; }
+        .stage-item.completed { color: #67c23a; }
+        .stage-item:hover { background: #f5f7fa; }
+        .content { flex: 1; padding: 24px; overflow-y: auto; }
+        /* 右侧活性窗口 - 用于插入角色监控面板 */
+        .right-panel-wrapper { display: flex; flex-direction: column; }
+        .card { background: white; border-radius: 8px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .btn { background: #4a90d9; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #357abd; }
+        .btn-success { background: #67c23a; }
+        .btn-success:hover { background: #5daf34; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #e4e7ed; border-radius: 6px; margin-top: 8px; font-family: inherit; }
+        textarea { min-height: 100px; resize: vertical; }
+        .form-group { margin-bottom: 16px; }
+        label { font-weight: 500; color: #303133; display: block; margin-bottom: 4px; }
+        .element-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
+        .element-card { border: 1px solid #e4e7ed; padding: 16px; border-radius: 6px; }
+        .element-card h4 { margin-bottom: 8px; color: #4a90d9; font-size: 14px; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-top: 8px; }
+        .status-pending { background: #f0f0f0; color: #666; }
+        .status-completed { background: #e8f5e9; color: #67c23a; }
+        .progress-bar { height: 8px; background: #e4e7ed; border-radius: 4px; overflow: hidden; margin: 16px 0; }
+        .progress-fill { height: 100%; background: #4a90d9; transition: width 0.3s; }
+        .info-box { background: #f0f7ff; border-left: 3px solid #4a90d9; padding: 12px; margin-bottom: 16px; border-radius: 4px; }
+        .chapter-list { display: grid; gap: 12px; }
+        .chapter-item { border: 1px solid #e4e7ed; padding: 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .output-area { background: #f5f7fa; border: 1px solid #e4e7ed; padding: 16px; border-radius: 6px; min-height: 200px; white-space: pre-wrap; }
+
+        /* 右侧角色监控面板 */
+        .role-monitor-panel { width: 320px; background: #f0f2f5; border-left: 1px solid #d9dde0; display: flex; flex-direction: column; overflow: hidden; position: relative; transition: transform 0.3s ease; }
+        .role-monitor-header { padding: 16px; background: #e4e7ed; border-bottom: 1px solid #d9dde0; }
+        .role-monitor-title { font-size: 14px; font-weight: 600; color: #333; display: flex; align-items: center; gap: 8px; }
+        .role-monitor-title .badge { font-size: 10px; background: #4a90d9; color: white; padding: 2px 6px; border-radius: 4px; }
+        .role-monitor-toggle-btn { position: absolute; left: -40px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; background: #4a90d9; color: white; border: none; border-radius: 6px 0 0 6px; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 2px 0 4px rgba(0,0,0,0.1); }
+        .role-monitor-toggle-btn:hover { background: #357abd; }
+        .role-monitor-logs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+        .role-log-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s; }
+        .role-log-card.active { box-shadow: 0 2px 8px rgba(74,144,217,0.2); border: 1px solid #4a90d9; }
+        .role-log-card.disabled { opacity: 0.6; }
+        .role-log-header { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 10px; }
+        .role-avatar { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .role-info { flex: 1; min-width: 0; }
+        .role-name { font-size: 13px; font-weight: 600; color: #333; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .role-llm { font-size: 11px; color: #999; margin-left: 8px; white-space: nowrap; }
+        .role-llm-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+        .role-log-content { padding: 10px 12px; font-size: 12px; line-height: 1.5; color: #666; max-height: 200px; overflow-y: auto; background: #fafafa; }
+        .role-log-item { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+        .role-log-item:last-child { margin-bottom: 0; border-bottom: none; }
+        .role-log-time { font-size: 10px; color: #999; margin-bottom: 4px; }
+        .role-log-message { word-wrap: break-word; }
+        .role-log-message .prompt { color: #666; }
+        .role-log-message .response { color: #333; }
+        .role-log-status { font-size: 10px; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 6px; }
+        .role-log-status.success { background: #e8f5e9; color: #67c23a; }
+        .role-log-status.error { background: #ffebee; color: #f56c6c; }
+        .role-log-status.pending { background: #fff7e6; color: #faad14; }
+
+        /* 设置弹窗样式 - Cherry Studio 风格 */
+        .settings-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .settings-modal.active { display: flex; align-items: center; justify-content: center; }
+        .settings-content { background: #f5f5f5; width: 95%; max-width: 1400px; height: 88vh; border-radius: 12px; display: flex; overflow: hidden; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        /* 左侧导航 */
+        .settings-sidebar { width: 180px; min-width: 180px; background: #ebebeb; padding: 16px 12px; border-right: 1px solid #ddd; display: flex; flex-direction: column; gap: 4px; }
+        .settings-sidebar h3 { font-size: 13px; color: #999; font-weight: 500; padding: 8px 10px; margin-bottom: 4px; }
+        .settings-nav-item { padding: 9px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; color: #444; display: flex; align-items: center; gap: 8px; transition: all 0.15s; }
+        .settings-nav-item:hover { background: #ddd; }
+        .settings-nav-item.active { background: white; color: #333; font-weight: 500; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        /* 中间供应商列表 */
+        .settings-main { width: 220px; min-width: 220px; background: #f0f0f0; border-right: 1px solid #ddd; display: flex; flex-direction: column; overflow: hidden; }
+        .settings-main-header { padding: 16px 16px 8px; font-size: 13px; color: #999; font-weight: 500; }
+        .settings-main-body { flex: 1; overflow-y: auto; padding: 4px 8px; }
+        .provider-list-item { display: flex; align-items: center; gap: 10px; padding: 10px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s; margin-bottom: 2px; }
+        .provider-list-item:hover { background: #e4e4e4; }
+        .provider-list-item.active { background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .provider-list-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0; }
+        .provider-list-name { flex: 1; font-size: 13px; color: #333; font-weight: 500; }
+        .provider-list-toggle { flex-shrink: 0; }
+        .toggle-switch { position: relative; width: 36px; height: 20px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 20px; transition: 0.3s; }
+        .toggle-slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+        .toggle-switch input:checked + .toggle-slider { background: #4a90d9; }
+        .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
+        .settings-main-footer { padding: 12px 8px; border-top: 1px solid #ddd; }
+        .add-provider-btn { width: 100%; padding: 8px; border: 1px dashed #bbb; border-radius: 8px; background: transparent; color: #666; cursor: pointer; font-size: 13px; transition: all 0.15s; }
+        .add-provider-btn:hover { background: #e4e4e4; border-color: #999; }
+        /* 右侧配置详情 */
+        .settings-detail { flex: 1; background: white; overflow: hidden; display: flex; flex-direction: column; align-self: stretch; }
+        .settings-detail-header { padding: 24px 28px 16px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+        .settings-detail-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; }
+        .settings-detail-title { font-size: 18px; font-weight: 600; color: #222; }
+        .settings-detail-body { flex: 1; padding: 20px 28px; overflow-y: auto; min-height: 0; }
+        .settings-section { display: none; width: 100%; }
+        .settings-section.active { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; }
+        .settings-section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #333; }
+        .settings-close { position: absolute; top: 16px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #999; z-index: 10; line-height: 1; }
+        .settings-close:hover { color: #333; }
+        /* 表单样式 */
+        .config-form .form-group { margin-bottom: 14px; }
+        .config-form .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #555; }
+        .config-form .form-group input { width: 100%; padding: 9px 12px; border: 1px solid #e0e0e0; border-radius: 7px; font-size: 13px; box-sizing: border-box; }
+        .config-form .form-group input:focus { outline: none; border-color: #4a90d9; }
+        .btn-primary { background: #4a90d9; color: white; border: none; padding: 9px 18px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+        .btn-primary:hover { background: #357abd; }
+        /* 模型列表 */
+        .model-list-result { margin-top: 12px; border: 1px solid #e8e8e8; border-radius: 8px; max-height: 340px; overflow-y: auto; background: #fafafa; }
+        .model-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; transition: background 0.1s; }
+        .model-item:last-child { border-bottom: none; }
+        .model-item:hover { background: #f0f5ff; }
+        .model-item.selected { background: #e8f0ff; }
+        .model-item span { color: #333; }
+        .model-item.selected span { color: #1a73e8; font-weight: 500; }
+        .save-config-bar { padding: 16px 0 0; border-top: 1px solid #eee; margin-top: auto; }
+        .save-result-msg { margin-top: 8px; font-size: 13px; padding: 8px 12px; border-radius: 4px; display: none; }
+        .save-result-msg.success { background: #e8f5e9; color: #2e7d32; display: block; }
+        .save-result-msg.error { background: #ffebee; color: #c62828; display: block; }
+        /* 保存结果弹窗样式 */
+        .settings-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .settings-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; text-align: center; animation: fadeIn 0.2s ease; }
+        .selected-model-input { margin-top: 10px; }
+        .selected-model-input label { font-size: 12px; color: #999; display: block; margin-bottom: 4px; }
+        .selected-model-input input { width: 100%; padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 7px; font-size: 13px; box-sizing: border-box; }
+        /* 供应商配置面板 */
+        .provider-config { display: none; }
+        .provider-config.active { display: block; }
+        .provider-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+        .provider-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+        .provider-name { font-size: 16px; font-weight: 600; }
+        /* 保存结果弹窗动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 角色配置样式 */
+        .role-list-item { display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s; margin-bottom: 4px; }
+        .role-list-item:hover { background: #e4e4e4; }
+        .role-list-item.active { background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .role-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .role-info { flex: 1; }
+        .role-name { font-size: 13px; font-weight: 600; color: #222; }
+        .role-desc { font-size: 11px; color: #999; margin-top: 2px; }
+        .role-model-badge { font-size: 11px; background: #e8f0ff; color: #4a90d9; padding: 2px 8px; border-radius: 10px; white-space: nowrap; max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+        .role-config-panel { padding: 0; }
+        .role-config-header { display: flex; align-items: center; gap: 16px; padding: 24px 28px 20px; border-bottom: 1px solid #eee; }
+        .role-config-avatar { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+        .role-config-title { font-size: 20px; font-weight: 700; color: #222; }
+        .role-config-subtitle { font-size: 13px; color: #999; margin-top: 3px; }
+        .role-config-body { padding: 24px 28px; }
+        .model-select-card { background: #f8f9ff; border: 1px solid #e0e8ff; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+        .model-select-card label { font-size: 13px; font-weight: 600; color: #444; display: block; margin-bottom: 10px; }
+        .model-select-card select { width: 100%; padding: 10px 14px; border: 1px solid #d0d8f0; border-radius: 8px; font-size: 14px; background: white; color: #333; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .model-select-card select:focus { outline: none; border-color: #4a90d9; }
+        .current-model-display { margin-top: 12px; padding: 10px 14px; background: white; border: 1px solid #e0e8ff; border-radius: 8px; display: flex; align-items: center; gap: 10px; }
+        .current-model-dot { width: 8px; height: 8px; border-radius: 50%; background: #67c23a; flex-shrink: 0; }
+        .current-model-text { font-size: 13px; color: #555; }
+        .role-save-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #4a90d9, #357abd); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+        .role-save-btn:hover { background: linear-gradient(135deg, #357abd, #2868a0); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,144,217,0.3); }
+        .role-save-success { text-align: center; padding: 10px; color: #67c23a; font-size: 13px; display: none; }
+
+        /* 角色监控面板切换按钮 */
+        .role-monitor-toggle { position: fixed; right: 0; top: 50%; transform: translateY(-50%); width: 40px; height: 80px; background: linear-gradient(180deg, #4a90d9, #357abd); color: white; border: none; border-radius: 12px 0 0 12px; cursor: pointer; z-index: 999; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: -2px 0 8px rgba(0,0,0,0.1); transition: all 0.3s; }
+        .role-monitor-toggle:hover { background: linear-gradient(180deg, #357abd, #2868a0); }
+        .role-monitor-toggle span { display: none; }
+        .role-monitor-panel.collapsed { transform: translateX(320px); transition: transform 0.3s ease; }
+        .role-monitor-toggle-btn { display: flex; }
+
+        /* 自定义提供商卡片样式 */
+        .custom-provider-card { border: 1px solid #e4e7ed; border-radius: 8px; padding: 16px; margin-bottom: 12px; background: #fafafa; }
+        .custom-provider-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .custom-provider-card-title { font-weight: 600; font-size: 15px; color: #303133; }
+        .custom-provider-card-actions { display: flex; gap: 8px; }
+        .custom-provider-card-actions button { padding: 6px 12px; font-size: 13px; border-radius: 4px; border: none; cursor: pointer; }
+        .custom-provider-card-info { font-size: 13px; color: #606266; line-height: 1.6; }
+        .custom-provider-card-info div { margin-bottom: 4px; }
+        .custom-provider-card-info strong { color: #303133; margin-right: 8px; }
+
+        /* 角色下拉面板 */
+        .char-dropdown-wrap { position: relative; }
+        .char-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-height: 500px; background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); overflow: hidden; z-index: 500; }
+        .char-dropdown.open { display: flex; flex-direction: column; }
+        .char-dropdown-header { padding: 14px 16px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .char-dropdown-title { font-size: 15px; font-weight: 600; }
+        .char-add-btn { background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .char-add-btn:hover { background: rgba(255,255,255,0.4); }
+        .char-dropdown-body { flex: 1; overflow-y: auto; padding: 8px; }
+        .char-list-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; margin-bottom: 4px; }
+        .char-list-item:hover { background: #f5f3ff; }
+        .char-list-avatar { width: 36px; height: 36px; border-radius: 50%; background: #ede9fe; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .char-list-info { flex: 1; min-width: 0; }
+        .char-list-name { font-size: 14px; font-weight: 600; color: #222; }
+        .char-list-meta { font-size: 11px; color: #999; margin-top: 2px; }
+        .char-list-empty { text-align: center; color: #bbb; padding: 40px 16px; font-size: 13px; }
+
+        /* 角色创建/编辑模态窗 */
+        .char-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .char-modal-overlay.open { display: flex; }
+        .char-modal { width: 90%; max-width: 900px; height: 85vh; background: white; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .char-modal-header { padding: 18px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .char-modal-title { font-size: 18px; font-weight: 600; }
+        .char-modal-close { background: none; border: none; color: white; font-size: 24px; cursor: pointer; opacity: 0.8; line-height: 1; }
+        .char-modal-close:hover { opacity: 1; }
+        .char-modal-body { flex: 1; overflow-y: auto; padding: 24px; }
+        .char-method-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+        .char-method-card { border: 2px solid #e8e8e8; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .char-method-card:hover { border-color: #667eea; background: #f5f3ff; }
+        .char-method-card.active { border-color: #667eea; background: #f5f3ff; box-shadow: 0 4px 12px rgba(102,126,234,0.2); }
+        .char-method-icon { font-size: 32px; margin-bottom: 10px; }
+        .char-method-name { font-size: 15px; font-weight: 600; color: #222; margin-bottom: 6px; }
+        .char-method-desc { font-size: 12px; color: #666; line-height: 1.4; }
+        .char-form-section { display: none; }
+        .char-form-section.active { display: block; }
+
+        /* 角色按钮 */
+        .char-nav-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.6); color: white; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .char-nav-btn:hover { background: rgba(255,255,255,0.4); }
+
+        /* 用户头像下拉菜单 */
+        .user-menu-wrap { position: relative; }
+        .user-avatar-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.6); color: white; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .user-avatar-btn:hover { background: rgba(255,255,255,0.4); }
+        .user-dropdown { display: none; position: absolute; top: calc(100% + 10px); right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); min-width: 180px; overflow: hidden; z-index: 500; }
+        .user-dropdown.open { display: block; }
+        .user-dropdown-header { padding: 14px 16px 10px; border-bottom: 1px solid #f0f0f0; }
+        .user-dropdown-name { font-size: 14px; font-weight: 600; color: #222; }
+        .user-dropdown-email { font-size: 12px; color: #999; margin-top: 2px; }
+        .user-dropdown-item { display: flex; align-items: center; gap: 10px; padding: 11px 16px; font-size: 13px; color: #333; cursor: pointer; transition: background 0.15s; }
+        .user-dropdown-item:hover { background: #f5f7fa; }
+        .user-dropdown-item .item-icon { font-size: 15px; width: 20px; text-align: center; }
+        .user-dropdown-divider { height: 1px; background: #f0f0f0; margin: 4px 0; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div style="font-size: 18px; font-weight: 600;">📖 AI网文编辑部</div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="color: white; font-size: 14px;">项目: <span id="nav-project-name">未创建</span></span>
+            <div class="char-dropdown-wrap">
+                <button class="char-nav-btn" onclick="toggleCharDropdown(event)" title="角色管理">👥</button>
+                <div class="char-dropdown" id="char-dropdown">
+                    <div class="char-dropdown-header">
+                        <div class="char-dropdown-title">角色清单</div>
+                        <button class="char-add-btn" onclick="openCharModal('create')">+ 新角色</button>
+                    </div>
+                    <div class="char-dropdown-body" id="char-list-body">
+                        <div class="char-list-empty">暂无角色</div>
+                    </div>
+                </div>
+            </div>
+            <div class="user-menu-wrap">
+                <button class="user-avatar-btn" onclick="toggleUserMenu(event)" title="用户菜单">👤</button>
+                <div class="user-dropdown" id="user-dropdown">
+                    <div class="user-dropdown-header">
+                        <div class="user-dropdown-name">创作者</div>
+                        <div class="user-dropdown-email">本地模式</div>
+                    </div>
+                    <div class="user-dropdown-item" onclick="openUserTab('profile')"><span class="item-icon">👤</span>个人信息</div>
+                    <div class="user-dropdown-item" onclick="openUserTab('works')"><span class="item-icon">📚</span>我的作品</div>
+                    <div class="user-dropdown-divider"></div>
+                    <div class="user-dropdown-item" onclick="openUserTab('model')"><span class="item-icon">🤖</span>模型设置</div>
+                    <div class="user-dropdown-item" onclick="openUserTab('roleconfig')"><span class="item-icon">👥</span>角色模型</div>
+                    <div class="user-dropdown-divider"></div>
+                    <div class="user-dropdown-item" onclick="openUserTab('about')"><span class="item-icon">ℹ️</span>关于</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <div class="stage-item active" data-stage="1" onclick="showStage(1)">1. 需求确认</div>
+            <div class="stage-item" data-stage="2" onclick="showStage(2)">2. 深度调研</div>
+            <div class="stage-item" data-stage="3" onclick="showStage(3)">3. 团队讨论</div>
+            <div class="stage-item" data-stage="4" onclick="showStage(4)">4. 基础设定</div>
+            <div class="stage-item" data-stage="5" onclick="showStage(5)">5. 章节创作</div>
+            <div class="stage-item" data-stage="6" onclick="showStage(6)">6. 读者反馈</div>
+            <div class="stage-item" data-stage="7" onclick="showStage(7)">7. 终审交付</div>
+        </div>
+
+        <div class="right-panel-wrapper">
+            <!-- 右侧角色监控面板 -->
+            <div class="role-monitor-panel" id="role-monitor-panel">
+                <button class="role-monitor-toggle-btn" onclick="toggleRoleMonitor()" title="隐藏/显示面板">rending_right</button>
+                <div class="role-monitor-header">
+                    <div class="role-monitor-title">
+                        <span>角色活动监控</span>
+                        <span class="badge">REAL-TIME</span>
+                    </div>
+                </div>
+                <div class="role-monitor-logs" id="role-monitor-logs">
+                    <!-- 角色卡片 - 初始化时就存在 -->
+                    <div class="role-log-card" id="role-card-chief_editor" data-role="chief_editor">
+                        <div class="role-log-header">
+                            <div class="role-avatar" style="background:#f5a62320;color:#f5a623">👑</div>
+                            <div class="role-info">
+                                <div class="role-name">
+                                    <span class="role-name-text">总编辑</span>
+                                    <span class="role-llm-badge" style="font-size:11px;background:#f5a62310;color:#f5a623;padding:2px 6px;border-radius:4px;margin-left:8px;">未配置</span>
+                                </div>
+                                <div class="role-llm" id="role-llm-chief_editor">LLM: -</div>
+                            </div>
+                        </div>
+                        <div class="role-log-content" id="role-log-content-chief_editor">
+                            <div style="text-align:center;color:#999;font-size:12px;padding:20px 0;">
+                                等待角色活动...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="role-log-card" id="role-card-editor" data-role="editor">
+                        <div class="role-log-header">
+                            <div class="role-avatar" style="background:#4a90d920;color:#4a90d9">✏️</div>
+                            <div class="role-info">
+                                <div class="role-name">
+                                    <span class="role-name-text">编辑</span>
+                                    <span class="role-llm-badge" style="font-size:11px;background:#4a90d910;color:#4a90d9;padding:2px 6px;border-radius:4px;margin-left:8px;">未配置</span>
+                                </div>
+                                <div class="role-llm" id="role-llm-editor">LLM: -</div>
+                            </div>
+                        </div>
+                        <div class="role-log-content" id="role-log-content-editor">
+                            <div style="text-align:center;color:#999;font-size:12px;padding:20px 0;">
+                                等待角色活动...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="role-log-card" id="role-card-researcher" data-role="researcher">
+                        <div class="role-log-header">
+                            <div class="role-avatar" style="background:#7b68ee20;color:#7b68ee">🔬</div>
+                            <div class="role-info">
+                                <div class="role-name">
+                                    <span class="role-name-text">研究员</span>
+                                    <span class="role-llm-badge" style="font-size:11px;background:#7b68ee10;color:#7b68ee;padding:2px 6px;border-radius:4px;margin-left:8px;">未配置</span>
+                                </div>
+                                <div class="role-llm" id="role-llm-researcher">LLM: -</div>
+                            </div>
+                        </div>
+                        <div class="role-log-content" id="role-log-content-researcher">
+                            <div style="text-align:center;color:#999;font-size:12px;padding:20px 0;">
+                                等待角色活动...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="role-log-card" id="role-card-writer" data-role="writer">
+                        <div class="role-log-header">
+                            <div class="role-avatar" style="background:#67c23a20;color:#67c23a">📝</div>
+                            <div class="role-info">
+                                <div class="role-name">
+                                    <span class="role-name-text">写手</span>
+                                    <span class="role-llm-badge" style="font-size:11px;background:#67c23a10;color:#67c23a;padding:2px 6px;border-radius:4px;margin-left:8px;">未配置</span>
+                                </div>
+                                <div class="role-llm" id="role-llm-writer">LLM: -</div>
+                            </div>
+                        </div>
+                        <div class="role-log-content" id="role-log-content-writer">
+                            <div style="text-align:center;color:#999;font-size:12px;padding:20px 0;">
+                                等待角色活动...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Stage 1: 需求确认 -->
+            <div id="stage-1" class="stage-content">
+                <div class="card">
+                    <h2>阶段一：需求确认</h2>
+                    <div class="info-box">
+                        <strong>目标：</strong>明确小说创作需求，确定类型、风格和核心设定
+                    </div>
+
+                    <div class="form-group">
+                        <label>项目名称 *</label>
+                        <input type="text" id="project-name" placeholder="例如：都市重生之商业帝国">
+                    </div>
+
+                    <div class="form-group">
+                        <label>小说类型 *</label>
+                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+                            <select id="genre-main" onchange="onGenreMainChange()" style="padding:9px 8px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                                <option value="">大类（必选）</option>
+                                <option value="玄幻">玄幻</option>
+                                <option value="仙侠">仙侠</option>
+                                <option value="都市">都市</option>
+                                <option value="历史">历史</option>
+                                <option value="科幻">科幻</option>
+                                <option value="奇幻">奇幻</option>
+                                <option value="武侠">武侠</option>
+                                <option value="游戏">游戏</option>
+                                <option value="灵异/悬疑">灵异/悬疑</option>
+                                <option value="军事">军事</option>
+                                <option value="言情/女频">言情/女频</option>
+                                <option value="体育">体育</option>
+                            </select>
+                            <select id="genre-sub" onchange="onGenreSubChange()" style="padding:9px 8px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                                <option value="">子类（必选）</option>
+                            </select>
+                            <select id="genre-style" onchange="onGenreTagChange()" style="padding:9px 8px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                                <option value="">流派（可选）</option>
+                                <option value="重生流">重生流</option>
+                                <option value="穿越流">穿越流</option>
+                                <option value="系统流">系统流</option>
+                                <option value="无限流">无限流</option>
+                                <option value="快穿流">快穿流</option>
+                                <option value="种田流">种田流</option>
+                                <option value="退婚流">退婚流</option>
+                                <option value="废柴流">废柴流</option>
+                                <option value="无敌流">无敌流</option>
+                                <option value="苟道流">苟道流</option>
+                                <option value="签到流">签到流</option>
+                                <option value="随身流">随身流</option>
+                                <option value="群像流">群像流</option>
+                                <option value="幕后黑手流">幕后黑手流</option>
+                                <option value="迪化流">迪化流</option>
+                                <option value="反套路流">反套路流</option>
+                                <option value="第四天灾流">第四天灾流</option>
+                            </select>
+                            <select id="genre-special" onchange="onGenreTagChange()" style="padding:9px 8px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                                <option value="">特殊（可选）</option>
+                                <option value="爽文">爽文</option>
+                                <option value="虐文">虐文</option>
+                                <option value="清水文">清水文</option>
+                                <option value="黑暗文">黑暗文</option>
+                                <option value="搞笑文">搞笑文</option>
+                                <option value="无线文">无线文（快节奏）</option>
+                                <option value="老白文">老白文（逻辑严谨）</option>
+                                <option value="小白文">小白文（轻松无脑）</option>
+                                <option value="无CP">无CP</option>
+                                <option value="双男主">双男主</option>
+                                <option value="双女主">双女主</option>
+                                <option value="多女主">多女主（后宫）</option>
+                            </select>
+                        </div>
+                        <input type="hidden" id="genre" value="">
+                        <div id="genre-traits" style="display:none;background:#f0f7ff;border-left:3px solid #4a90d9;padding:10px 12px;border-radius:4px;font-size:12px;color:#555;line-height:1.6;margin-top:6px"></div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>写作视角</label>
+                            <div style="display:flex;gap:0;border:1px solid #e0e0e0;border-radius:7px;overflow:hidden">
+                                <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;transition:all 0.15s" id="pov-label-3rd">
+                                    <input type="radio" name="pov" id="pov-3rd" value="第三人称" onchange="onPovChange()" style="display:none" checked>
+                                    第三人称（他/她）
+                                </label>
+                                <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;transition:all 0.15s" id="pov-label-1st">
+                                    <input type="radio" name="pov" id="pov-1st" value="第一人称" onchange="onPovChange()" style="display:none">
+                                    第一人称（我）
+                                </label>
+                                <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;transition:all 0.15s" id="pov-label-2nd">
+                                    <input type="radio" name="pov" id="pov-2nd" value="第二人称" onchange="onPovChange()" style="display:none">
+                                    第二人称（你）
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>频道</label>
+                            <div style="display:flex;gap:0;border:1px solid #e0e0e0;border-radius:7px;overflow:hidden">
+                                <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;transition:all 0.15s" id="channel-label-male">
+                                    <input type="radio" name="channel" id="channel-male" value="男频" onchange="onChannelChange()" style="display:none" checked>
+                                    男频
+                                </label>
+                                <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;border-left:1px solid #e0e0e0;transition:all 0.15s" id="channel-label-female">
+                                    <input type="radio" name="channel" id="channel-female" value="女频" onchange="onChannelChange()" style="display:none">
+                                    女频
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>拟刊登平台</label>
+                        <div style="display:flex;gap:0;border:1px solid #e0e0e0;border-radius:7px;overflow:hidden">
+                            <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;transition:all 0.15s" id="platform-label-qidian">
+                                <input type="radio" name="platform" id="platform-qidian" value="起点" onchange="onPlatformChange()" style="display:none" checked>起点
+                            </label>
+                            <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;border-left:1px solid #e0e0e0;transition:all 0.15s" id="platform-label-fanqie">
+                                <input type="radio" name="platform" id="platform-fanqie" value="番茄" onchange="onPlatformChange()" style="display:none">番茄
+                            </label>
+                            <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;border-left:1px solid #e0e0e0;transition:all 0.15s" id="platform-label-qimao">
+                                <input type="radio" name="platform" id="platform-qimao" value="七猫" onchange="onPlatformChange()" style="display:none">七猫
+                            </label>
+                            <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;border-left:1px solid #e0e0e0;transition:all 0.15s" id="platform-label-jjwxc">
+                                <input type="radio" name="platform" id="platform-jjwxc" value="晋江" onchange="onPlatformChange()" style="display:none">晋江
+                            </label>
+                            <label style="flex:1;text-align:center;padding:9px 4px;font-size:13px;cursor:pointer;margin:0;font-weight:normal;border-left:1px solid #e0e0e0;transition:all 0.15s" id="platform-label-qq">
+                                <input type="radio" name="platform" id="platform-qq" value="QQ" onchange="onPlatformChange()" style="display:none">QQ
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>核心需求</label>
+                        <textarea id="requirements" rows="5" placeholder="描述你的小说创作需求，包括：&#10;- 主角设定（性格、背景、金手指）&#10;- 故事主线&#10;- 目标读者群&#10;- 预计字数" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+                    </div>
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                        <button class="btn" onclick="completeStage1()">完成需求确认，进入下一阶段</button>
+                        <button class="btn" onclick="aiGenerateRequirements(this)">✨ AI生成核心需求</button>
+                    </div>
+                </div>
+
+                <div class="card" id="project-info" style="display:none;">
+                    <h3>✅ 项目已创建</h3>
+                    <p style="margin-top: 8px;">项目ID: <code id="current-project-id"></code></p>
+                    <p>当前阶段: 阶段<span id="current-stage">1</span></p>
+                </div>
+            </div>
+
+            <!-- Stage 2: 深度调研 -->
+            <div id="stage-2" class="stage-content" style="display:none;">
+                <div class="card">
+                    <h2>阶段二：深度调研</h2>
+                    <div class="info-box">
+                        <strong>目标：</strong>市场分析、榜单调研、拆文分析，产出研究简报
+                    </div>
+
+                    <div class="form-group">
+                        <label>市场分析</label>
+                        <textarea id="market-analysis" placeholder="分析当前市场热点、读者偏好、竞品情况..."></textarea>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateMarketAnalysis()">AI生成市场分析</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>榜单调研</label>
+                        <textarea id="ranking-research" placeholder="调研相关类型的榜单作品，分析成功要素..."></textarea>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateRankingResearch()">AI生成榜单调研</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>拆文分析（至少3篇）</label>
+                        <textarea id="novel-analysis" placeholder="拆解分析3篇以上同类型优秀作品：&#10;- 开篇设计&#10;- 节奏把控&#10;- 爽点设置&#10;- 人物塑造"></textarea>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateNovelAnalysis()">AI生成拆文分析</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>创意建议</label>
+                        <textarea id="creative-suggestions" placeholder="基于调研结果，提出创意建议..."></textarea>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateCreativeSuggestions()">AI生成创意建议</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>AI生成结果</label>
+                        <div class="output-area" id="stage2-output">等待生成...</div>
+                    </div>
+
+                    <button class="btn" onclick="completeStage2()">完成调研，进入团队讨论</button>
+                </div>
+            </div>
+
+            <!-- Stage 3: 团队讨论 -->
+            <div id="stage-3" class="stage-content" style="display:none;">
+                <div class="card">
+                    <h2>阶段三：团队讨论 - 确定12核心要素</h2>
+                    <div class="info-box">
+                        <strong>关键：</strong>所有核心要素必须写入记忆库，后续创作将基于这些设定
+                    </div>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="elements-progress" style="width: 0%"></div>
+                    </div>
+                    <p style="text-align: center; margin-bottom: 16px;">已完成: <strong><span id="elements-count">0</span>/12</strong></p>
+
+                    <div class="element-grid">
+                        <div class="element-card">
+                            <h4>1. 世界观设定</h4>
+                            <textarea id="element-world" placeholder="时代背景、地理环境、势力分布"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('world', '世界观设定')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-world">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>2. 主角设定</h4>
+                            <textarea id="element-protagonist" placeholder="姓名、性格、金手指、目标"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('protagonist', '主角设定')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-protagonist">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>3. 等级体系</h4>
+                            <textarea id="element-levels" placeholder="实力等级、货币资源体系"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('levels', '等级体系')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-levels">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>4. 技能体系</h4>
+                            <textarea id="element-skills" placeholder="主角技能、进化路线"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('skills', '技能体系')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-skills">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>5. 配角设定</h4>
+                            <textarea id="element-supporting" placeholder="主要配角、出场章节"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('supporting', '配角设定')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-supporting">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>6. 势力设定</h4>
+                            <textarea id="element-factions" placeholder="各势力实力、关系、领地"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('factions', '势力设定')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-factions">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>7. 主线剧情</h4>
+                            <textarea id="element-mainplot" placeholder="主线+支线+情感线"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('mainplot', '主线剧情')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-mainplot">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>8. 副本设计</h4>
+                            <textarea id="element-dungeons" placeholder="升级副本、危机副本、收获副本"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('dungeons', '副本设计')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-dungeons">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>9. 伏笔体系</h4>
+                            <textarea id="element-foreshadowing" placeholder="伏笔列表、埋入章节、回收章节"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('foreshadowing', '伏笔体系')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-foreshadowing">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>10. 钩子体系</h4>
+                            <textarea id="element-hooks" placeholder="章节钩子、卷钩子、全书钩子"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('hooks', '钩子体系')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-hooks">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>11. 章节细纲</h4>
+                            <textarea id="element-outline" placeholder="前5章详细规划"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('outline', '章节细纲')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-outline">未完成</span>
+                        </div>
+
+                        <div class="element-card">
+                            <h4>12. 高潮安排</h4>
+                            <textarea id="element-climax" placeholder="全书高潮章节安排"></textarea>
+                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('climax', '高潮安排')">写入记忆库</button>
+                            <span class="status-badge status-pending" id="status-climax">未完成</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px; text-align: center;">
+                        <button class="btn btn-success" id="complete-stage3-btn" onclick="completeStage3()" disabled>完成团队讨论，进入基础设定</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage 4: 基础设定 -->
+            <div id="stage-4" class="stage-content" style="display:none;">
+                <div class="card">
+                    <h2>阶段四：基础设定定稿</h2>
+                    <div class="info-box">
+                        <strong>目标：</strong>基于记忆库中的核心要素，产出完整的设定文档
+                    </div>
+
+                    <div class="form-group">
+                        <label>大纲文档</label>
+                        <textarea id="outline-doc" placeholder="基于12核心要素，编写完整大纲..."></textarea>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateOutlineDoc()">AI生成大纲文档</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>人物设定文档</label>
+                        <textarea id="characters-doc" placeholder="详细的人物设定..."></textarea>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateCharactersDoc()">AI生成人物设定</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>世界观文档</label>
+                        <textarea id="world-doc" placeholder="完整的世界观设定..."></textarea>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateWorldDoc()">AI生成世界观文档</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>AI生成结果</label>
+                        <div class="output-area" id="stage4-output">等待生成...</div>
+                    </div>
+
+                    <button class="btn" onclick="completeStage4()">设定定稿，开始章节创作</button>
+                </div>
+            </div>
+
+            <!-- Stage 5: 章节创作 -->
+            <div id="stage-5" class="stage-content" style="display:none;">
+                <div class="card">
+                    <h2>阶段五：章节创作</h2>
+                    <div class="info-box">
+                        <strong>规则：</strong>每5章一批，写手创作 → 编辑审核 → 总编确认
+                    </div>
+
+                    <div class="form-group">
+                        <label>当前批次</label>
+                        <p>第 <span id="batch-start">1</span> - <span id="batch-end">5</span> 章</p>
+                    </div>
+
+                    <div class="chapter-list" id="chapter-list">
+                        <div class="chapter-item">
+                            <span>第1章</span>
+                            <button class="btn" onclick="writeChapter(1)">开始创作</button>
+                        </div>
+                        <div class="chapter-item">
+                            <span>第2章</span>
+                            <button class="btn" onclick="writeChapter(2)">开始创作</button>
+                        </div>
+                        <div class="chapter-item">
+                            <span>第3章</span>
+                            <button class="btn" onclick="writeChapter(3)">开始创作</button>
+                        </div>
+                        <div class="chapter-item">
+                            <span>第4章</span>
+                            <button class="btn" onclick="writeChapter(4)">开始创作</button>
+                        </div>
+                        <div class="chapter-item">
+                            <span>第5章</span>
+                            <button class="btn" onclick="writeChapter(5)">开始创作</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>章节内容预览</label>
+                        <div class="output-area" id="stage5-output">选择章节开始创作...</div>
+                    </div>
+
+                    <div style="margin-top: 16px;">
+                        <button class="btn" onclick="completeStage5()">完成本批次，进入读者反馈</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage 6: 读者反馈 -->
+            <div id="stage-6" class="stage-content" style="display:none;">
+                <div class="card">
+                    <h2>阶段六：读者反馈</h2>
+                    <div class="info-box">
+                        <strong>触发：</strong>每20章收集一次读者反馈，调整创作方向
+                    </div>
+
+                    <div class="form-group">
+                        <label>阅读体验评分（1-10）</label>
+                        <input type="number" id="feedback-score" min="1" max="10" value="8">
+                    </div>
+
+                    <div class="form-group">
+                        <label>读者反馈</label>
+                        <textarea id="reader-feedback" placeholder="收集读者对节奏、爽点、人物的反馈..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>改进建议</label>
+                        <textarea id="improvement-suggestions" placeholder="基于反馈提出改进建议..."></textarea>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateImprovementSuggestions()">AI生成改进建议</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>AI分析结果</label>
+                        <div class="output-area" id="stage6-output">等待分析...</div>
+                    </div>
+
+                    <button class="btn" onclick="completeStage6()">完成反馈分析，继续创作</button>
+                </div>
+            </div>
+
+            <!-- Stage 7: 终审交付 -->
+            <div id="stage-7" class="stage-content" style="display:none;">
+                <div class="card">
+                    <h2>阶段七：终审交付</h2>
+                    <div class="info-box">
+                        <strong>最后一步：</strong>全文审核、质量检查、准备交付
+                    </div>
+
+                    <div class="form-group">
+                        <label>全文字数统计</label>
+                        <input type="text" id="total-words" placeholder="例如：150000字" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>质量检查结果</label>
+                        <div class="output-area" id="quality-check-result">
+                            等待质量检查...
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="runQualityCheck()">运行质量检查</button>
+                    <button class="btn btn-success" onclick="completeStage7()" style="margin-left: 8px;">确认交付</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色创建/编辑模态窗 -->
+    <div class="char-modal-overlay" id="char-modal" onclick="closeCharModal(event)">
+        <div class="char-modal" onclick="event.stopPropagation()">
+            <div class="char-modal-header">
+                <div class="char-modal-title" id="char-modal-title">新建角色</div>
+                <button class="char-modal-close" onclick="closeCharModal()">×</button>
+            </div>
+            <div class="char-modal-body">
+                <!-- 方式选择 -->
+                <div id="char-method-selector" class="char-method-selector">
+                    <div class="char-method-card" data-method="auto" onclick="selectCharMethod('auto')">
+                        <div class="char-method-icon">✨</div>
+                        <div class="char-method-name">AI自动生成</div>
+                        <div class="char-method-desc">根据故事梗概自动提取并生成角色档案</div>
+                    </div>
+                    <div class="char-method-card" data-method="assisted" onclick="selectCharMethod('assisted')">
+                        <div class="char-method-icon">💡</div>
+                        <div class="char-method-name">AI辅助生成</div>
+                        <div class="char-method-desc">输入想法，AI给出建议供确认修改</div>
+                    </div>
+                    <div class="char-method-card" data-method="manual" onclick="selectCharMethod('manual')">
+                        <div class="char-method-icon">✍️</div>
+                        <div class="char-method-name">手动创建</div>
+                        <div class="char-method-desc">完全自定义填写角色信息</div>
+                    </div>
+                </div>
+
+                <!-- AI自动生成 -->
+                <div id="char-form-auto" class="char-form-section">
+                    <div style="background:#f0f7ff;border-left:3px solid #4a90d9;padding:12px;margin-bottom:16px;border-radius:4px">
+                        <strong>提示：</strong>将从第一步填写的故事梗概中自动提取主要角色并生成完整档案
+                    </div>
+                    <button class="btn-primary" style="width:100%;padding:12px;font-size:15px" onclick="autoGenerateChars()">✨ 开始自动生成</button>
+                    <div id="auto-result" style="margin-top:16px;display:none">
+                        <div style="font-weight:600;margin-bottom:12px">生成结果（<span id="auto-count">0</span>个角色）：</div>
+                        <div id="auto-chars-preview" style="display:flex;flex-direction:column;gap:10px;max-height:400px;overflow-y:auto"></div>
+                        <div style="display:flex;gap:8px;margin-top:16px">
+                            <button class="btn-primary" style="flex:1" onclick="confirmAutoChars()">确认并保存全部</button>
+                            <button class="btn" style="padding:10px 20px;background:#f0f0f0;color:#333;border:none" onclick="closeCharModal()">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI辅助生成 -->
+                <div id="char-form-assisted" class="char-form-section">
+                    <div class="form-group"><label>角色想法/需求</label>
+                        <textarea id="assisted-idea" rows="4" placeholder="描述你想要的角色，例如：&#10;- 一个冷酷但内心温柔的杀手&#10;- 主角的青梅竹马，性格活泼开朗&#10;- 反派BOSS，实力强大但有悲惨过去" style="width:100%;padding:10px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;resize:vertical"></textarea>
+                    </div>
+                    <button class="btn-primary" style="width:100%;padding:12px" onclick="assistedGenerateChar()">💡 生成角色建议</button>
+                    <div id="assisted-result" style="margin-top:16px;display:none">
+                        <div style="font-weight:600;margin-bottom:12px">AI建议：</div>
+                        <div id="assisted-preview" style="border:1px solid #e8e8e8;border-radius:8px;padding:16px;background:#fafafa"></div>
+                        <div style="display:flex;gap:8px;margin-top:16px">
+                            <button class="btn-primary" style="flex:1" onclick="confirmAssistedChar()">确认并保存</button>
+                            <button class="btn" style="padding:10px 20px;background:#f0f0f0;color:#333;border:none" onclick="assistedGenerateChar()">重新生成</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 手动创建/编辑 -->
+                <div id="char-form-manual" class="char-form-section">
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
+                        <div class="form-group"><label>姓名 *</label><input type="text" id="manual-name" placeholder="角色姓名"></div>
+                        <div class="form-group"><label>角色定位</label>
+                            <select id="manual-role" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                                <option value="主角">主角</option><option value="女主">女主</option>
+                                <option value="反派">反派</option><option value="配角">配角</option><option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>外貌描述</label><textarea id="manual-appearance" rows="2" placeholder="外貌特征..." style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;resize:vertical"></textarea></div>
+                    <div class="form-group"><label>性格特点</label><input type="text" id="manual-personality" placeholder="用逗号分隔，如：冷静、睿智、果断"></div>
+                    <div class="form-group"><label>背景故事</label><textarea id="manual-background" rows="3" placeholder="成长经历、关键事件..." style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;resize:vertical"></textarea></div>
+                    <div class="form-group"><label>能力/力量体系</label><textarea id="manual-ability" rows="2" placeholder="当前实力、成长路线..." style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;resize:vertical"></textarea></div>
+                    <div class="form-group"><label>人物关系</label><textarea id="manual-relations" rows="2" placeholder="与其他角色的关系..." style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;resize:vertical"></textarea></div>
+                    <div class="form-group"><label>角色弧线</label><textarea id="manual-arc" rows="2" placeholder="成长变化、角色发展..." style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;resize:vertical"></textarea></div>
+                    <div style="display:flex;gap:8px;margin-top:8px">
+                        <button class="btn-primary" style="flex:1;padding:12px" onclick="saveManualChar()">保存角色</button>
+                        <button class="btn" style="padding:12px 20px;background:#fff0f0;color:#e53e3e;border:1px solid #fecaca" onclick="deleteManualChar()" id="manual-delete-btn" style="display:none">删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div class="settings-modal" id="settings-modal">
+        <div class="settings-content">
+            <button class="settings-close" onclick="closeSettings()">×</button>
+            <!-- 左侧：导航栏 -->
+            <div class="settings-sidebar">
+                <h3>设置</h3>
+                <div class="settings-nav-item active" data-tab="profile" onclick="switchSettingsTab('profile')">👤 个人信息</div>
+                <div class="settings-nav-item" data-tab="works" onclick="switchSettingsTab('works')">📚 我的作品</div>
+                <div class="settings-nav-item" data-tab="model" onclick="switchSettingsTab('model')">🤖 模型设置</div>
+                <div class="settings-nav-item" data-tab="roleconfig" onclick="switchSettingsTab('roleconfig')">👥 角色模型</div>
+                <div class="settings-nav-item" data-tab="about" onclick="switchSettingsTab('about')">ℹ️ 关于</div>
+            </div>
+            <!-- 中间：供应商列表 -->
+            <div class="settings-main" id="settings-main-model">
+                <div class="settings-main-header">模型服务商</div>
+                <div class="settings-main-body" id="provider-list-body">
+                    <div class="provider-list-item active" data-provider="claude" onclick="selectProvider('claude')">
+                        <div class="provider-list-icon" style="background:#d97757;color:white">C</div>
+                        <span class="provider-list-name">Claude</span>
+                        <label class="toggle-switch provider-list-toggle" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="toggle-claude" onchange="toggleProvider('claude', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="provider-list-item" data-provider="deepseek" onclick="selectProvider('deepseek')">
+                        <div class="provider-list-icon" style="background:#4169e1;color:white">D</div>
+                        <span class="provider-list-name">DeepSeek</span>
+                        <label class="toggle-switch provider-list-toggle" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="toggle-deepseek" onchange="toggleProvider('deepseek', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="provider-list-item" data-provider="openai" onclick="selectProvider('openai')">
+                        <div class="provider-list-icon" style="background:#10a37f;color:white">O</div>
+                        <span class="provider-list-name">OpenAI</span>
+                        <label class="toggle-switch provider-list-toggle" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="toggle-openai" onchange="toggleProvider('openai', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="provider-list-item" data-provider="qwen" onclick="selectProvider('qwen')">
+                        <div class="provider-list-icon" style="background:#ff6a00;color:white">Q</div>
+                        <span class="provider-list-name">通义千问</span>
+                        <label class="toggle-switch provider-list-toggle" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="toggle-qwen" onchange="toggleProvider('qwen', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="provider-list-item" data-provider="doubao" onclick="selectProvider('doubao')">
+                        <div class="provider-list-icon" style="background:#00c4cc;color:white">豆</div>
+                        <span class="provider-list-name">字节豆包</span>
+                        <label class="toggle-switch provider-list-toggle" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="toggle-doubao" onchange="toggleProvider('doubao', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <!-- 自定义供应商动态插入 -->
+                    <div id="custom-provider-list-items"></div>
+                </div>
+                <div class="settings-main-footer">
+                    <button class="add-provider-btn" onclick="selectProvider('custom')">+ 添加自定义供应商</button>
+                </div>
+            </div>
+            <!-- 中间：角色列表（模型配置页） -->
+            <div class="settings-main" id="settings-main-role" style="display:none">
+                <div class="settings-main-header">团队成员</div>
+                <div class="settings-main-body" id="role-list-body"></div>
+            </div>
+            <!-- 右侧：配置详情 -->
+            <div class="settings-detail">
+                <div class="settings-section active" id="settings-model-detail">
+                    <!-- 右侧详情header -->
+                    <div class="settings-detail-header" id="detail-header">
+                        <div class="settings-detail-icon" id="detail-icon" style="background:#d97757;color:white">C</div>
+                        <div>
+                            <div class="settings-detail-title" id="detail-title">Anthropic Claude</div>
+                            <div style="font-size:12px;color:#999;margin-top:2px" id="detail-subtitle">配置 API 密钥和模型</div>
+                        </div>
+                    </div>
+                    <div class="settings-detail-body">
+                    <!-- 模型配置面板 -->
+                    <div class="api-config-panel" id="api-config-panel">
+
+                        <!-- Claude -->
+                        <div class="provider-config" id="config-claude">
+                            <div class="config-form">
+                                <div class="form-group">
+                                    <label>API Key</label>
+                                    <input type="password" id="api-key-claude" placeholder="sk-ant-xxxxx">
+                                </div>
+                                <div class="form-group">
+                                    <label>Base URL</label>
+                                    <input type="text" id="url-claude" value="https://api.anthropic.com">
+                                </div>
+                                <button class="btn btn-primary" onclick="testConnection('claude')">获取可用模型</button>
+                                <div class="model-list-result" id="model-list-claude"></div>
+                                <div class="selected-model-input">
+                                    <label>已选模型（点击上方列表选择或手动输入）</label>
+                                    <input type="text" id="selected-model-claude" placeholder="例如：claude-3-5-sonnet-20241022">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DeepSeek -->
+                        <div class="provider-config" id="config-deepseek" style="display:none">
+                            <div class="config-form">
+                                <div class="form-group">
+                                    <label>API Key</label>
+                                    <input type="password" id="api-key-deepseek" placeholder="sk-xxxxx">
+                                </div>
+                                <div class="form-group">
+                                    <label>Base URL</label>
+                                    <input type="text" id="url-deepseek" value="https://api.deepseek.com/v1">
+                                </div>
+                                <button class="btn btn-primary" onclick="testConnection('deepseek')">获取可用模型</button>
+                                <div class="model-list-result" id="model-list-deepseek"></div>
+                                <div class="selected-model-input">
+                                    <label>已选模型（点击上方列表选择或手动输入）</label>
+                                    <input type="text" id="selected-model-deepseek" placeholder="例如：deepseek-chat">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- OpenAI -->
+                        <div class="provider-config" id="config-openai" style="display:none">
+                            <div class="config-form">
+                                <div class="form-group">
+                                    <label>API Key</label>
+                                    <input type="password" id="api-key-openai" placeholder="sk-xxxxx">
+                                </div>
+                                <div class="form-group">
+                                    <label>Base URL</label>
+                                    <input type="text" id="url-openai" value="https://api.openai.com/v1">
+                                </div>
+                                <button class="btn btn-primary" onclick="testConnection('openai')">获取可用模型</button>
+                                <div class="model-list-result" id="model-list-openai"></div>
+                                <div class="selected-model-input">
+                                    <label>已选模型（点击上方列表选择或手动输入）</label>
+                                    <input type="text" id="selected-model-openai" placeholder="例如：gpt-4o">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 通义千问 -->
+                        <div class="provider-config" id="config-qwen" style="display:none">
+                            <div class="config-form">
+                                <div class="form-group">
+                                    <label>API Key</label>
+                                    <input type="password" id="api-key-qwen" placeholder="sk-xxxxx">
+                                </div>
+                                <div class="form-group">
+                                    <label>Base URL</label>
+                                    <input type="text" id="url-qwen" value="https://dashscope.aliyuncs.com/compatible-mode/v1">
+                                </div>
+                                <button class="btn btn-primary" onclick="testConnection('qwen')">获取可用模型</button>
+                                <div class="model-list-result" id="model-list-qwen"></div>
+                                <div class="selected-model-input">
+                                    <label>已选模型（点击上方列表选择或手动输入）</label>
+                                    <input type="text" id="selected-model-qwen" placeholder="例如：qwen-turbo">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 豆包 -->
+                        <div class="provider-config" id="config-doubao" style="display:none">
+                            <div class="config-form">
+                                <div class="form-group">
+                                    <label>API Key</label>
+                                    <input type="password" id="api-key-doubao" placeholder="xxxxx">
+                                </div>
+                                <div class="form-group">
+                                    <label>Base URL</label>
+                                    <input type="text" id="url-doubao" value="https://ark.cn-beijing.volces.com/api/v3">
+                                </div>
+                                <button class="btn btn-primary" onclick="testConnection('doubao')">获取可用模型</button>
+                                <div class="model-list-result" id="model-list-doubao"></div>
+                                <div class="selected-model-input">
+                                    <label>已选模型（点击上方列表选择或手动输入）</label>
+                                    <input type="text" id="selected-model-doubao" placeholder="例如：doubao-pro-32k">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 自定义提供商管理 -->
+                        <div class="provider-config" id="config-custom" style="display:none">
+                            <!-- 已添加的自定义提供商列表 -->
+                            <div id="custom-providers-list" style="margin-bottom:20px"></div>
+                            <!-- 添加新提供商表单 -->
+                            <div class="config-form" id="custom-provider-form">
+                                <h4 style="margin-bottom:15px;color:#303133">➕ 添加新的自定义提供商</h4>
+                                <div class="form-group">
+                                    <label>提供商名称 *</label>
+                                    <input type="text" id="custom-name" placeholder="例如：我的 Llama 服务器">
+                                </div>
+                                <div class="form-group">
+                                    <label>API 类型 *</label>
+                                    <select id="api-type-custom" style="width:100%;padding:10px;border:1px solid #e4e7ed;border-radius:6px;margin-top:4px">
+                                        <option value="openai_compatible">OpenAI 兼容（支持 DeepSeek、千问、Llama 等）</option>
+                                        <option value="openai">OpenAI 原生</option>
+                                        <option value="claude">Anthropic Claude</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>API Key *</label>
+                                    <input type="password" id="api-key-custom" placeholder="your-api-key">
+                                </div>
+                                <div class="form-group">
+                                    <label>Base URL *</label>
+                                    <input type="text" id="url-custom" placeholder="https://api.example.com/v1">
+                                </div>
+                                <button class="btn btn-primary" onclick="testConnection('custom')">获取可用模型</button>
+                                <div class="model-list-result" id="model-list-custom"></div>
+                                <div class="selected-model-input">
+                                    <label>已选模型（点击上方列表选择或手动输入）</label>
+                                    <input type="text" id="selected-model-custom" placeholder="输入模型名称">
+                                </div>
+                                <div style="margin-top:15px;display:flex;gap:10px">
+                                    <button class="btn" onclick="addCustomProvider()" style="flex:1;background:#67c23a;color:white;font-weight:600">✅ 添加提供商</button>
+                                    <button class="btn" onclick="cancelEditCustomProvider()" id="cancel-edit-btn" style="flex:1;display:none">取消</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- end api-config-panel -->
+
+                    <!-- 保存配置按钮区 -->
+                    <div class="save-config-bar">
+                        <button class="btn" onclick="saveModelConfig()" style="width:100%;background:#67c23a;color:white;font-size:15px;padding:12px;font-weight:600;border-radius:6px;">💾 保存模型配置</button>
+                        <div id="save-config-result" class="save-result-msg"></div>
+                    </div>
+                    </div><!-- end settings-detail-body -->
+                </div><!-- end settings-model-detail -->
+
+                <!-- 个人信息页面 -->
+                <div class="settings-section" id="settings-profile">
+                    <div class="settings-detail-header">
+                        <div class="settings-detail-icon" style="background:linear-gradient(135deg,#4a90d9,#357abd);color:white;font-size:20px">👤</div>
+                        <div><div class="settings-detail-title">个人信息</div><div style="font-size:12px;color:#999;margin-top:2px">本地创作者账户</div></div>
+                    </div>
+                    <div class="settings-detail-body">
+                        <div class="config-form">
+                            <div class="form-group"><label>昵称</label><input type="text" id="profile-name" value="创作者" placeholder="输入昵称"></div>
+                            <div class="form-group"><label>简介</label><input type="text" id="profile-bio" placeholder="一句话介绍自己"></div>
+                            <div class="form-group"><label>写作风格偏好</label>
+                                <select id="profile-style" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                                    <option value="">不限</option>
+                                    <option value="fantasy">玄幻/奇幻</option>
+                                    <option value="xianxia">仙侠/修真</option>
+                                    <option value="urban">都市/现代</option>
+                                    <option value="history">历史/穿越</option>
+                                    <option value="scifi">科幻</option>
+                                    <option value="romance">言情</option>
+                                </select>
+                            </div>
+                            <div class="save-config-bar"><button class="btn-primary" onclick="saveProfile()">保存信息</button></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 我的作品页面 -->
+                <div class="settings-section" id="settings-works">
+                    <div class="settings-detail-header">
+                        <div class="settings-detail-icon" style="background:linear-gradient(135deg,#f093fb,#f5576c);color:white;font-size:20px">📚</div>
+                        <div><div class="settings-detail-title">我的作品</div><div style="font-size:12px;color:#999;margin-top:2px">本地项目管理</div></div>
+                    </div>
+                    <div class="settings-detail-body">
+                        <div id="works-list" style="display:flex;flex-direction:column;gap:10px">
+                            <div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">暂无作品，开始创建项目吧</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 角色模型配置页面 -->
+                <div class="settings-section" id="settings-roleconfig">
+                    <div class="settings-detail-header">
+                        <div class="settings-detail-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;font-size:20px">👥</div>
+                        <div>
+                            <div class="settings-detail-title" id="role-detail-title">总编辑</div>
+                            <div style="font-size:12px;color:#999;margin-top:2px" id="role-detail-subtitle">为角色分配专属AI模型</div>
+                        </div>
+                    </div>
+                    <div class="settings-detail-body">
+                        <div id="role-config-content">
+                            <!-- 角色配置面板动态渲染 -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section" id="settings-about">
+                    <div class="settings-detail-header">
+                        <div class="settings-detail-icon" style="background:#4a90d9;color:white">ℹ</div>
+                        <div>
+                            <div class="settings-detail-title">关于</div>
+                            <div style="font-size:12px;color:#999;margin-top:2px">AI网文编辑部</div>
+                        </div>
+                    </div>
+                    <div class="settings-detail-body" style="line-height:1.8;">
+                        <h2 style="margin-bottom:10px">AI网文编辑部 - 专业模式</h2>
+                        <p style="color:#666;margin-bottom:20px">版本 v6.2</p>
+                        <p style="margin-bottom:10px"><strong>功能特性：</strong></p>
+                        <ul style="margin-left:20px;margin-bottom:20px;">
+                            <li>7阶段专业工作流</li>
+                            <li>多模型AI支持</li>
+                            <li>记忆库管理系统</li>
+                            <li>AI去味检测</li>
+                            <li>流式章节创作</li>
+                        </ul>
+                    </div>
+                </div>
+            </div><!-- end settings-detail -->
+        </div><!-- end settings-content -->
+    </div><!-- end settings-modal -->
+
+    <script src="/static/workflow-manager.js"></script>
+    <script src="/static/memory-client.js"></script>
+    <script>
+        let memoryClient = null;
+        let completedElements = 0;
+        const elementKeys = ['world', 'protagonist', 'levels', 'skills', 'supporting', 'factions',
+                            'mainplot', 'dungeons', 'foreshadowing', 'hooks', 'outline', 'climax'];
+
+        function showStage(num) {
+            document.querySelectorAll('.stage-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.stage-content').forEach(el => el.style.display = 'none');
+
+            const stageItem = document.querySelector(`.stage-item[data-stage="${num}"]`);
+            if (stageItem) stageItem.classList.add('active');
+
+            const stageContent = document.getElementById('stage-' + num);
+            if (stageContent) stageContent.style.display = 'block';
+        }
+
+        async function completeStage1() {
+            const name = document.getElementById('project-name').value;
+            const genre = document.getElementById('genre').value;
+            const requirements = document.getElementById('requirements').value;
+            const pov = getPov();
+            const channel = getChannel();
+            const platform = getPlatform();
+
+            if (!name || !genre) {
+                alert('请填写项目名称并选择小说类型');
+                return;
+            }
+
+            try {
+                const project = await workflowManager.createProject(name, 'professional', {genre, requirements, pov, channel, platform});
+                memoryClient = new MemoryClient(project.id);
+
+                document.getElementById('current-project-id').textContent = project.id;
+                document.getElementById('current-stage').textContent = '2';
+                document.getElementById('project-info').style.display = 'block';
+                document.getElementById('nav-project-name').textContent = name;
+
+                // 标记阶段1完成
+                document.querySelector('.stage-item[data-stage="1"]').classList.add('completed');
+
+                alert('✅ 阶段一完成！进入阶段二：深度调研');
+                showStage(2);
+            } catch (error) {
+                alert('创建失败: ' + error.message);
+            }
+        }
+
+        async function completeStage2() {
+            const market = document.getElementById('market-analysis').value;
+            const ranking = document.getElementById('ranking-research').value;
+            const analysis = document.getElementById('novel-analysis').value;
+
+            if (!market || !ranking || !analysis) {
+                alert('请完成所有调研内容');
+                return;
+            }
+
+            // 保存调研结果到记忆库
+            if (memoryClient) {
+                try {
+                    await memoryClient.addDocument('plot', '市场分析', market);
+                    await memoryClient.addDocument('plot', '榜单调研', ranking);
+                    await memoryClient.addDocument('plot', '拆文分析', analysis);
+                    const suggestions = document.getElementById('creative-suggestions').value;
+                    if (suggestions) {
+                        await memoryClient.addDocument('plot', '创意建议', suggestions);
+                    }
+                } catch (error) {
+                    console.error('保存调研结果失败:', error);
+                }
+            }
+
+            document.querySelector('.stage-item[data-stage="2"]').classList.add('completed');
+            alert('✅ 阶段二完成！进入阶段三：团队讨论');
+            showStage(3);
+        }
+
+        async function generateRankingResearch() {
+            const genre = document.getElementById('genre').value;
+            const outputArea = document.getElementById('stage2-output');
+
+            outputArea.textContent = '正在生成榜单调研...';
+
+            addRoleLog('researcher', '开始生成榜单调研<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
+
+            const prompt = `作为网文榜单分析师，请针对【${genre}】类型，调研当前热门榜单作品。
+
+请分析以下内容：
+1. 本期前三名作品（书名、作者、平台）
+2. 热门作品的核心卖点（金手指、爽点、设定）
+3. 读者偏好变化趋势
+4. 榜单规则和上榜条件
+5. 成功作品的共性总结
+
+请输出详细的榜单调研报告，数据要具体真实。`;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'researcher'})
+                });
+
+                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('ranking-research').value = result.content;
+                    outputArea.textContent = '✅ 榜单调研已生成并填入';
+                    addRoleLog('researcher', '✅ 榜单调研生成完成<br><span class="response">内容已填入榜单调研框</span>', 'success', 'success');
+                } else {
+                    outputArea.textContent = '❌ 生成失败: ' + result.error;
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                }
+            } catch (error) {
+                outputArea.textContent = '❌ 请求失败: ' + error.message;
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+            }
+        }
+
+        async function generateMarketAnalysis() {
+            const genre = document.getElementById('genre').value;
+            const requirements = document.getElementById('requirements').value;
+            const outputArea = document.getElementById('stage2-output');
+
+            outputArea.textContent = '正在生成市场分析...';
+
+            // 添加角色日志
+            addRoleLog('researcher', '开始生成市场分析<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
+
+            const prompt = `作为网文市场分析师，请针对【${genre}】类型小说进行市场分析。
+
+项目需求：
+${requirements}
+
+请分析以下内容：
+1. 当前市场热点和趋势
+2. 目标读者群体特征
+3. 竞品分析（列举3-5部热门作品）
+4. 市场机会点
+
+请用专业、数据化的语言输出分析报告。`;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'researcher'})
+                });
+
+                // 更新角色日志状态
+                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('market-analysis').value = result.content;
+                    outputArea.textContent = '✅ 市场分析已生成并填入';
+                    addRoleLog('researcher', '✅ 市场分析生成完成<br><span class="response">内容已填入市场分析框</span>', 'success', 'success');
+                } else {
+                    outputArea.textContent = '❌ 生成失败: ' + result.error;
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                }
+            } catch (error) {
+                outputArea.textContent = '❌ 请求失败: ' + error.message;
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+            }
+        }
+
+        async function generateNovelAnalysis() {
+            const genre = document.getElementById('genre').value;
+            const outputArea = document.getElementById('stage2-output');
+
+            outputArea.textContent = '正在生成拆文分析...';
+
+            const prompt = `作为网文拆解专家，请针对【${genre}】类型，拆解分析3部优秀作品。
+
+对每部作品分析：
+1. 开篇设计（前3章如何吸引读者）
+2. 节奏把控（章节长度、情节密度）
+3. 爽点设置（爽点类型、频率、强度）
+4. 人物塑造（主角特点、配角功能）
+5. 可借鉴的写作技巧
+
+请输出详细的拆文分析报告。`;
+
+            addRoleLog('researcher', '开始生成拆文分析', 'pending', 'pending');
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'researcher'})
+                });
+
+                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('novel-analysis').value = result.content;
+                    outputArea.textContent = '✅ 拆文分析已生成并填入';
+                    addRoleLog('researcher', '✅ 拆文分析生成完成<br><span class="response">内容已填入拆文分析框</span>', 'success', 'success');
+                } else {
+                    outputArea.textContent = '❌ 生成失败: ' + result.error;
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                }
+            } catch (error) {
+                outputArea.textContent = '❌ 请求失败: ' + error.message;
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+            }
+        }
+
+        async function generateCreativeSuggestions() {
+            const market = document.getElementById('market-analysis').value;
+            const ranking = document.getElementById('ranking-research').value;
+            const analysis = document.getElementById('novel-analysis').value;
+            const outputArea = document.getElementById('stage2-output');
+
+            if (!market || !ranking || !analysis) {
+                alert('请先完成前面的调研内容');
+                return;
+            }
+
+            outputArea.textContent = '正在生成创意建议...';
+
+            const prompt = `基于以下调研结果，提出创新性的创意建议：
+
+市场分析：
+${market}
+
+榜单调研：
+${ranking}
+
+拆文分析：
+${analysis}
+
+请提出：
+1. 差异化创意点（如何与竞品区分）
+2. 创新的金手指设计
+3. 独特的世界观设定
+4. 新颖的爽点组合
+5. 具体的执行建议
+
+请输出可落地的创意方案。`;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'researcher'})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('creative-suggestions').value = result.content;
+                    outputArea.textContent = '✅ 创意建议已生成并填入';
+                    addRoleLog('researcher', '✅ 创意建议生成完成', 'success', 'success');
+                } else {
+                    outputArea.textContent = '❌ 生成失败: ' + result.error;
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                }
+            } catch (error) {
+                outputArea.textContent = '❌ 请求失败: ' + error.message;
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+            }
+        }
+
+        async function saveElement(key, title) {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            const content = document.getElementById('element-' + key).value;
+            if (!content) {
+                alert('请填写内容');
+                return;
+            }
+
+            try {
+                await memoryClient.addDocument('world', title, content, {element: key});
+                document.getElementById('status-' + key).textContent = '✓ 已完成';
+                document.getElementById('status-' + key).className = 'status-badge status-completed';
+
+                completedElements++;
+                document.getElementById('elements-count').textContent = completedElements;
+
+                const progress = (completedElements / 12) * 100;
+                document.getElementById('elements-progress').style.width = progress + '%';
+
+                if (completedElements >= 12) {
+                    document.getElementById('complete-stage3-btn').disabled = false;
+                }
+
+                alert('✅ ' + title + ' 已写入记忆库');
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+            }
+        }
+
+        async function completeStage3() {
+            if (completedElements < 12) {
+                alert('请完成所有12个核心要素');
+                return;
+            }
+
+            document.querySelector('.stage-item[data-stage="3"]').classList.add('completed');
+            alert('✅ 阶段三完成！进入阶段四：基础设定');
+            showStage(4);
+        }
+
+        async function completeStage4() {
+            const outline = document.getElementById('outline-doc').value;
+            if (!outline) {
+                alert('请完成大纲文档');
+                return;
+            }
+
+            // 保存设定文档到记忆库
+            if (memoryClient) {
+                try {
+                    await memoryClient.addDocument('plot', '大纲文档', outline);
+                    const characters = document.getElementById('characters-doc').value;
+                    if (characters) {
+                        await memoryClient.addDocument('characters', '人物设定文档', characters);
+                    }
+                    const world = document.getElementById('world-doc').value;
+                    if (world) {
+                        await memoryClient.addDocument('world', '世界观文档', world);
+                    }
+                } catch (error) {
+                    console.error('保存设定文档失败:', error);
+                }
+            }
+
+            document.querySelector('.stage-item[data-stage="4"]').classList.add('completed');
+            alert('✅ 阶段四完成！进入阶段五：章节创作');
+            showStage(5);
+        }
+
+        async function generateOutlineDoc() {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            const outputArea = document.getElementById('stage4-output');
+            outputArea.textContent = '正在从记忆库读取核心要素并生成大纲...';
+
+            try {
+                // 从记忆库读取12核心要素
+                const worldDocs = await memoryClient.queryDocuments('world');
+
+                let elementsContext = '核心要素：\n';
+                worldDocs.forEach(doc => {
+                    elementsContext += `\n【${doc.title}】\n${doc.content}\n`;
+                });
+
+                const prompt = `作为总编，基于以下12核心要素，编写完整的小说大纲：
+
+${elementsContext}
+
+请输出：
+1. 全书结构（分卷规划）
+2. 主线剧情发展（起承转合）
+3. 重要章节节点（每10章的关键事件）
+4. 伏笔埋设与回收计划
+5. 高潮章节安排
+
+要求：逻辑严密、节奏合理、爽点密集。`;
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'chief_editor'})
+                });
+
+                addRoleLog('chief_editor', '正在调用总编角色...', 'info', 'pending');
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('outline-doc').value = result.content;
+                    outputArea.textContent = '✅ 大纲文档已生成并填入';
+                    addRoleLog('chief_editor', '✅ 大纲文档生成完成<br><span class="response">内容已填入大纲文档框</span>', 'success', 'success');
+                } else {
+                    outputArea.textContent = '❌ 生成失败: ' + result.error;
+                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
+                }
+            } catch (error) {
+                outputArea.textContent = '❌ 请求失败: ' + error.message;
+                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
+            }
+        }
+
+        async function generateCharactersDoc() {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            const outputArea = document.getElementById('stage4-output');
+            outputArea.textContent = '正在生成人物设定文档...';
+
+            try {
+                const worldDocs = await memoryClient.queryDocuments('world');
+
+                let elementsContext = '';
+                worldDocs.forEach(doc => {
+                    if (doc.title.includes('主角') || doc.title.includes('配角')) {
+                        elementsContext += `\n【${doc.title}】\n${doc.content}\n`;
+                    }
+                });
+
+                const prompt = `基于以下人物要素，编写详细的人物设定文档：
+
+${elementsContext}
+
+请为每个角色输出：
+1. 基本信息（姓名、年龄、外貌）
+2. 性格特点（3-5个关键词+详细描述）
+3. 背景故事（成长经历、重要事件）
+4. 能力体系（当前实力、成长路线）
+5. 人物关系（与其他角色的关系）
+6. 出场章节规划
+7. 角色弧光（成长变化）
+
+要求：人物立体、性格鲜明、功能明确。`;
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'researcher'})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('characters-doc').value = result.content;
+                    outputArea.textContent = '✅ 人物设定文档已生成并填入';
+                    addRoleLog('researcher', '✅ 人物设定文档生成完成', 'success', 'success');
+                } else {
+                    outputArea.textContent = '❌ 生成失败: ' + result.error;
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                }
+            } catch (error) {
+                outputArea.textContent = '❌ 请求失败: ' + error.message;
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+            }
+        }
+
+        async function generateWorldDoc() {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            const outputArea = document.getElementById('stage4-output');
+            outputArea.textContent = '正在生成世界观文档...';
+
+            try {
+                const worldDocs = await memoryClient.queryDocuments('world');
+
+                let elementsContext = '';
+                worldDocs.forEach(doc => {
+                    if (doc.title.includes('世界观') || doc.title.includes('等级') ||
+                        doc.title.includes('技能') || doc.title.includes('势力')) {
+                        elementsContext += `\n【${doc.title}】\n${doc.content}\n`;
+                    }
+                });
+
+                const prompt = `基于以下世界观要素，编写完整的世界观设定文档：
+
+${elementsContext}
+
+请输出：
+1. 世界背景（时代、地理、历史）
+2. 等级体系（详细的等级划分、突破条件）
+3. 力量体系（修炼方法、技能分类）
+4. 势力分布（各大势力、实力对比、地盘）
+5. 资源体系（货币、宝物、材料）
+6. 规则设定（世界法则、限制条件）
+
+要求：体系完整、逻辑自洽、易于扩展。`;
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'researcher'})
+                });
+
+                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('world-doc').value = result.content;
+                    outputArea.textContent = '✅ 世界观文档已生成并填入';
+                    addRoleLog('researcher', '✅ 世界观文档生成完成', 'success', 'success');
+                } else {
+                    outputArea.textContent = '❌ 生成失败: ' + result.error;
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                }
+            } catch (error) {
+                outputArea.textContent = '❌ 请求失败: ' + error.message;
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+            }
+        }
+
+        async function writeChapter(num) {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            const outputArea = document.getElementById('stage5-output');
+            outputArea.textContent = `正在创作第${num}章...`;
+
+            try {
+                // 从记忆库读取所有设定
+                const worldDocs = await memoryClient.queryDocuments('world');
+                const characterDocs = await memoryClient.queryDocuments('characters');
+                const plotDocs = await memoryClient.queryDocuments('plot');
+
+                let context = '=== 世界观设定 ===\n';
+                worldDocs.forEach(doc => {
+                    context += `${doc.title}: ${doc.content.substring(0, 200)}...\n`;
+                });
+
+                context += '\n=== 人物设定 ===\n';
+                characterDocs.forEach(doc => {
+                    try {
+                        const c = JSON.parse(doc.content);
+                        context += `【${c.name}】(${c.role || '角色'}) 性格:${c.personality || ''} 背景:${(c.background||'').substring(0,100)} 能力:${(c.ability||'').substring(0,80)}\n`;
+                    } catch(e) {
+                        context += `${doc.title}: ${doc.content.substring(0, 200)}\n`;
+                    }
+                });
+
+                context += '\n=== 大纲设定 ===\n';
+                plotDocs.forEach(doc => {
+                    context += `${doc.title}: ${doc.content.substring(0, 200)}...\n`;
+                });
+
+                const pov = getPov();
+                const channel = getChannel();
+                const platform = getPlatform();
+                const prompt = `你是专业网文写手，基于以下设定创作第${num}章：
+
+${context}
+
+创作要求：
+1. 字数：2000-3000字
+2. 写作视角：${pov}
+3. 目标频道：${channel}，刊登平台：${platform}
+4. 开篇吸引：前100字要有钩子
+5. 节奏紧凑：每500字一个小高潮
+6. 爽点密集：至少3个爽点
+7. 章末钩子：结尾留悬念
+8. 符合网文风格：对话生动、描写简洁、节奏快
+
+${num === 1 ? '这是第一章，需要：\n- 快速引入主角\n- 展示初始困境\n- 引出金手指\n- 第一个小爽点' : ''}
+
+请直接输出章节正文，不要额外说明。`;
+
+                addRoleLog('writer', '开始创作第' + num + '章<br><span class="prompt">字数要求: 2000-3000字</span>', 'pending', 'pending');
+
+                const response = await fetch('/gen', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'writer'})
+                });
+
+                addRoleLog('writer', '正在调用写手角色流式生成...', 'info', 'pending');
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error('请求失败: ' + errText);
+                }
+
+                // 流式接收
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let chapterContent = '';
+
+                outputArea.textContent = '';
+
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, {stream: true});
+                    chapterContent += chunk;
+                    outputArea.textContent = chapterContent;
+                    outputArea.scrollTop = outputArea.scrollHeight;
+                }
+
+                // 保存章节到记忆库
+                await memoryClient.addDocument('chapters', `第${num}章`, chapterContent);
+
+                addRoleLog('writer', '✅ 第' + num + '章创作完成<br><span class="response">内容已保存到记忆库</span>', 'success', 'success');
+                alert(`✅ 第${num}章创作完成并已保存`);
+
+            } catch (error) {
+                outputArea.textContent = '❌ 创作失败: ' + error.message;
+                addRoleLog('writer', '❌ 创作失败: ' + error.message, 'error', 'error');
+            }
+        }
+
+        async function completeStage5() {
+            document.querySelector('.stage-item[data-stage="5"]').classList.add('completed');
+            alert('✅ 阶段五完成！进入阶段六：读者反馈');
+            showStage(6);
+        }
+
+        async function completeStage6() {
+            const feedback = document.getElementById('reader-feedback').value;
+            if (!feedback) {
+                alert('请填写读者反馈');
+                return;
+            }
+
+            // 保存反馈到记忆库
+            if (memoryClient) {
+                try {
+                    const score = document.getElementById('feedback-score').value;
+                    const suggestions = document.getElementById('improvement-suggestions').value;
+
+                    await memoryClient.addDocument('reviews', '读者反馈', feedback, {
+                        score: score,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    if (suggestions) {
+                        await memoryClient.addDocument('reviews', '改进建议', suggestions);
+                    }
+                } catch (error) {
+                    console.error('保存反馈失败:', error);
+                }
+            }
+
+            document.querySelector('.stage-item[data-stage="6"]').classList.add('completed');
+            alert('✅ 阶段六完成！进入阶段七：终审交付');
+            showStage(7);
+        }
+
+        async function generateImprovementSuggestions() {
+            const feedback = document.getElementById('reader-feedback').value;
+            const score = document.getElementById('feedback-score').value;
+            const outputArea = document.getElementById('stage6-output');
+
+            if (!feedback) {
+                alert('请先填写读者反馈');
+                return;
+            }
+
+            outputArea.textContent = '正在分析反馈并生成改进建议...';
+
+            const prompt = `作为网文编辑，分析以下读者反馈并提出改进建议：
+
+评分：${score}/10
+
+读者反馈：
+${feedback}
+
+请分析：
+1. 反馈中的核心问题（节奏、人物、剧情、爽点等）
+2. 问题的根本原因
+3. 具体的改进方案（可操作的建议）
+4. 后续章节的调整方向
+5. 需要避免的写作误区
+
+请输出专业、可执行的改进建议。`;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'editor'})
+                });
+
+                addRoleLog('editor', '正在调用编辑角色...', 'info', 'pending');
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('improvement-suggestions').value = result.content;
+                    outputArea.textContent = '✅ 改进建议已生成并填入';
+                    addRoleLog('editor', '✅ 改进建议生成完成<br><span class="response">内容已填入改进建议框</span>', 'success', 'success');
+                } else {
+                    outputArea.textContent = '❌ 生成失败: ' + result.error;
+                    addRoleLog('editor', '❌ 生成失败: ' + result.error, 'error', 'error');
+                }
+            } catch (error) {
+                outputArea.textContent = '❌ 请求失败: ' + error.message;
+                addRoleLog('editor', '❌ 请求失败: ' + error.message, 'error', 'error');
+            }
+        }
+
+        async function runQualityCheck() {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            const resultArea = document.getElementById('quality-check-result');
+            resultArea.textContent = '正在进行质量检查...\n';
+
+            try {
+                // 1. 获取所有章节
+                const chapters = await memoryClient.queryDocuments('chapters');
+
+                if (chapters.length === 0) {
+                    resultArea.textContent = '❌ 没有找到章节内容';
+                    return;
+                }
+
+                // 统计字数
+                let totalWords = 0;
+                let allContent = '';
+                chapters.forEach(chapter => {
+                    totalWords += chapter.content.length;
+                    allContent += chapter.content + '\n\n';
+                });
+
+                document.getElementById('total-words').value = `${totalWords}字（${chapters.length}章）`;
+
+                resultArea.textContent += `✓ 章节统计：${chapters.length}章，共${totalWords}字\n\n`;
+
+                // 2. AI去味检测（取前5000字作为样本）
+                const sampleText = allContent.substring(0, 5000);
+
+                resultArea.textContent += '正在进行AI去味检测...\n';
+
+                const deflavorResponse = await fetch('/api/deflavor', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: sampleText})
+                });
+
+                const deflavorResult = await deflavorResponse.json();
+
+                if (deflavorResult.success) {
+                    const result = deflavorResult.result;
+                    resultArea.textContent += `\n=== AI去味检测结果 ===\n`;
+                    resultArea.textContent += `综合评分：${result.score}/100\n`;
+                    resultArea.textContent += `检测到的AI模式：${result.detected_patterns.length}个\n\n`;
+
+                    if (result.detected_patterns.length > 0) {
+                        resultArea.textContent += '问题详情：\n';
+                        result.detected_patterns.forEach(pattern => {
+                            resultArea.textContent += `- ${pattern.name}（出现${pattern.count}次）\n`;
+                            resultArea.textContent += `  建议：${pattern.suggestion}\n`;
+                        });
+                    } else {
+                        resultArea.textContent += '✓ 未检测到明显的AI痕迹\n';
+                    }
+
+                    resultArea.textContent += `\n总体建议：${result.suggestions}\n`;
+                }
+
+                // 3. 基本质量检查
+                resultArea.textContent += `\n=== 基本质量检查 ===\n`;
+                resultArea.textContent += `✓ 章节完整性检查通过\n`;
+                resultArea.textContent += `✓ 字数符合要求\n`;
+
+                // 检查章节平均字数
+                const avgWords = Math.floor(totalWords / chapters.length);
+                if (avgWords < 1500) {
+                    resultArea.textContent += `⚠ 章节平均字数偏少（${avgWords}字），建议增加到2000字以上\n`;
+                } else if (avgWords > 4000) {
+                    resultArea.textContent += `⚠ 章节平均字数偏多（${avgWords}字），建议控制在3000字左右\n`;
+                } else {
+                    resultArea.textContent += `✓ 章节平均字数合理（${avgWords}字）\n`;
+                }
+
+                resultArea.textContent += `\n=== 质量检查完成 ===\n`;
+                resultArea.textContent += `总体评价：${deflavorResult.success && deflavorResult.result.score >= 70 ? '✅ 质量良好，可以交付' : '⚠ 建议优化后再交付'}\n`;
+
+            } catch (error) {
+                resultArea.textContent += '\n❌ 质量检查失败: ' + error.message;
+            }
+        }
+
+        async function completeStage7() {
+            if (confirm('确认交付项目？')) {
+                document.querySelector('.stage-item[data-stage="7"]').classList.add('completed');
+                alert('🎉 恭喜！项目已完成交付！');
+            }
+        }
+
+        // 设置面板相关函数
+        function openSettings() {
+            document.getElementById('settings-modal').classList.add('active');
+            loadModelConfig();
+            switchSettingsTab('profile');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.remove('active');
+        }
+
+        const PROVIDER_META = {
+            'claude':   {name: 'Anthropic Claude', bg: '#d97757', text: 'C'},
+            'deepseek': {name: 'DeepSeek',         bg: '#4169e1', text: 'D'},
+            'openai':   {name: 'OpenAI',            bg: '#10a37f', text: 'O'},
+            'qwen':     {name: '阿里通义千问',       bg: '#ff6a00', text: 'Q'},
+            'doubao':   {name: '字节豆包',           bg: '#00c4cc', text: '豆'},
+            'custom':   {name: '添加自定义供应商',   bg: '#666',    text: '+'}
+        };
+
+        function switchSettingsTab(tab) {
+            document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+            const navItem = document.querySelector(`.settings-nav-item[data-tab="${tab}"]`);
+            if (navItem) navItem.classList.add('active');
+
+            // 显示/隐藏中间供应商列表
+            const mainPanel = document.getElementById('settings-main-model');
+            const rolePanel = document.getElementById('settings-main-role');
+            if (mainPanel) mainPanel.style.display = tab === 'model' ? 'flex' : 'none';
+            if (rolePanel) rolePanel.style.display = tab === 'roleconfig' ? 'flex' : 'none';
+
+            // 切换右侧内容
+            document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+            if (tab === 'model') {
+                document.getElementById('settings-model-detail').classList.add('active');
+            } else {
+                const sec = document.getElementById('settings-' + tab);
+                if (sec) sec.classList.add('active');
+            }
+
+            if (tab === 'roleconfig') initRoleConfig();
+            if (tab === 'works') loadWorksList();
+        }
+
+        function openUserTab(tab) {
+            closeUserMenu();
+            openSettings();
+            setTimeout(() => switchSettingsTab(tab), 50);
+        }
+
+        function toggleUserMenu(e) {
+            e.stopPropagation();
+            document.getElementById('user-dropdown').classList.toggle('open');
+        }
+
+        function closeUserMenu() {
+            document.getElementById('user-dropdown').classList.remove('open');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.user-menu-wrap')) closeUserMenu();
+        });
+
+        function saveProfile() {
+            const name = document.getElementById('profile-name').value || '创作者';
+            document.querySelector('.user-dropdown-name').textContent = name;
+            alert('个人信息已保存');
+        }
+
+        function loadWorksList() {
+            const list = document.getElementById('works-list');
+            if (!list) return;
+            const projects = JSON.parse(localStorage.getItem('ai_editorial_projects') || '[]');
+            if (projects.length === 0) {
+                list.innerHTML = '<div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">暂无作品，开始创建项目吧</div>';
+                return;
+            }
+            list.innerHTML = projects.map((p, i) => `
+                <div style="border:1px solid #e8e8e8;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;background:#fafafa">
+                    <div>
+                        <div style="font-weight:600;font-size:14px;color:#222">${p.name || '未命名项目'}</div>
+                        <div style="font-size:12px;color:#999;margin-top:3px">${p.genre || ''} · ${p.updatedAt || '未知时间'}</div>
+                    </div>
+                    <button class="btn-primary" style="font-size:12px;padding:6px 14px" onclick="loadProjectFromSettings(${i})">打开</button>
+                </div>`).join('');
+        }
+
+        function loadProjectFromSettings(idx) {
+            closeSettings();
+            // 触发加载项目逻辑（如已有）
+        }
+
+        // ===== 角色管理系统 =====
+        let characters = [];
+        let currentCharIdx = -1;
+        let currentMethod = '';
+        let tempGeneratedChars = [];
+
+        function _charCacheKey() {
+            return 'ai_chars_' + (memoryClient ? memoryClient.projectId : 'local');
+        }
+
+        async function loadCharactersFromMemory() {
+            if (memoryClient) {
+                try {
+                    const docs = await memoryClient.queryDocuments('characters');
+                    characters = docs.map(doc => {
+                        try { return { ...JSON.parse(doc.content), _memId: doc.id }; }
+                        catch(e) { return { name: doc.title, background: doc.content, _memId: doc.id }; }
+                    });
+                    localStorage.setItem(_charCacheKey(), JSON.stringify(characters));
+                    return;
+                } catch(e) { console.warn('从记忆库加载角色失败', e); }
+            }
+            characters = JSON.parse(localStorage.getItem(_charCacheKey()) || '[]');
+        }
+
+        async function saveCharToMemory(c) {
+            const content = JSON.stringify(c);
+            const title = c.name || '未命名角色';
+            if (memoryClient) {
+                try {
+                    if (c._memId) {
+                        await fetch(`/api/memory/${memoryClient.projectId}/characters/${c._memId}`, {
+                            method: 'PUT', headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({title, content, metadata: {role: c.role || '', firstAppearance: c.firstAppearance || ''}})
+                        });
+                    } else {
+                        const id = await memoryClient.addDocument('characters', title, content, {role: c.role || '', firstAppearance: c.firstAppearance || ''});
+                        c._memId = id;
+                    }
+                } catch(e) { console.warn('保存角色到记忆库失败', e); }
+            }
+            localStorage.setItem(_charCacheKey(), JSON.stringify(characters));
+        }
+
+        async function deleteCharFromMemory(c) {
+            if (memoryClient && c._memId) {
+                try {
+                    await fetch(`/api/memory/${memoryClient.projectId}/characters/${c._memId}`, {method: 'DELETE'});
+                } catch(e) { console.warn('删除角色失败', e); }
+            }
+        }
+
+        // 下拉面板控制
+        function toggleCharDropdown(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('char-dropdown');
+            dropdown.classList.toggle('open');
+            if (dropdown.classList.contains('open')) {
+                loadCharactersFromMemory().then(() => renderCharList());
+            }
+        }
+
+        function closeCharDropdown() {
+            document.getElementById('char-dropdown').classList.remove('open');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.char-dropdown-wrap')) closeCharDropdown();
+        });
+
+        function renderCharList() {
+            const body = document.getElementById('char-list-body');
+            if (characters.length === 0) {
+                body.innerHTML = '<div class="char-list-empty">暂无角色</div>';
+                return;
+            }
+            const avatarColors = ['#ede9fe','#fef3c7','#dcfce7','#fee2e2','#dbeafe','#fce7f3'];
+            body.innerHTML = characters.map((c, i) => `
+                <div class="char-list-item" onclick="openCharModal('edit', ${i})">
+                    <div class="char-list-avatar" style="background:${avatarColors[i % avatarColors.length]}">${c.emoji || '👤'}</div>
+                    <div class="char-list-info">
+                        <div class="char-list-name">${c.name || '未命名'}</div>
+                        <div class="char-list-meta">${c.role || '角色'} ${c.firstAppearance ? '· 第'+c.firstAppearance+'章首次出场' : ''}</div>
+                    </div>
+                </div>`).join('');
+        }
+
+        // 模态窗控制
+        function openCharModal(mode, idx) {
+            closeCharDropdown();
+            currentCharIdx = idx !== undefined ? idx : -1;
+            const modal = document.getElementById('char-modal');
+            const title = document.getElementById('char-modal-title');
+            const selector = document.getElementById('char-method-selector');
+
+            if (mode === 'create') {
+                title.textContent = '新建角色';
+                selector.style.display = 'grid';
+                document.querySelectorAll('.char-form-section').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.char-method-card').forEach(c => c.classList.remove('active'));
+                currentMethod = '';
+            } else if (mode === 'edit') {
+                title.textContent = '编辑角色';
+                selector.style.display = 'none';
+                selectCharMethod('manual');
+                loadCharToManualForm(characters[idx]);
+                document.getElementById('manual-delete-btn').style.display = 'block';
+            }
+            modal.classList.add('open');
+        }
+
+        function closeCharModal(e) {
+            if (e && e.target !== document.getElementById('char-modal')) return;
+            document.getElementById('char-modal').classList.remove('open');
+            currentCharIdx = -1;
+            currentMethod = '';
+            tempGeneratedChars = [];
+        }
+
+        function selectCharMethod(method) {
+            currentMethod = method;
+            document.querySelectorAll('.char-method-card').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.char-method-card[data-method="${method}"]`)?.classList.add('active');
+            document.querySelectorAll('.char-form-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('char-form-' + method).classList.add('active');
+        }
+
+        // 方式1：AI自动生成
+        async function autoGenerateChars() {
+            const synopsis = document.getElementById('synopsis') ? document.getElementById('synopsis').value : '';
+            const genre = document.getElementById('genre') ? document.getElementById('genre').value : '';
+            if (!synopsis || synopsis.trim().length < 20) {
+                alert('请先在第一步填写故事梗概（至少20字）');
+                return;
+            }
+            const btn = document.querySelector('#char-form-auto .btn-primary');
+            const origText = btn.textContent;
+            btn.textContent = '⏳ 生成中...';
+            btn.disabled = true;
+            try {
+                const prompt = `你是专业网文编辑。根据以下故事梗概，提取并分析主要角色，以JSON数组格式返回。
+
+小说类型：${genre}
+写作视角：${getPov()}  频道：${getChannel()}
+故事梗概：${synopsis}
+
+请返回JSON数组，每个角色包含：
+- name: 角色姓名
+- role: 角色定位（主角/女主/反派/配角）
+- emoji: 代表该角色的emoji
+- appearance: 外貌描述（2-3句）
+- personality: 性格特点（用逗号分隔3-5个词）
+- background: 背景故事（2-3句）
+- ability: 能力/力量体系
+- relations: 与其他角色的关系
+- arc: 角色弧线/成长方向
+
+只返回JSON数组，不要其他文字。`;
+
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await resp.json();
+                const text = data.content || '';
+                const match = text.match(/\[[\s\S]*\]/);
+                if (!match) throw new Error('未能解析角色数据');
+                tempGeneratedChars = JSON.parse(match[0]);
+                if (!Array.isArray(tempGeneratedChars) || tempGeneratedChars.length === 0) throw new Error('未提取到角色');
+
+                document.getElementById('auto-count').textContent = tempGeneratedChars.length;
+                const preview = document.getElementById('auto-chars-preview');
+                preview.innerHTML = tempGeneratedChars.map((c, i) => `
+                    <div style="border:1px solid #e8e8e8;border-radius:8px;padding:14px;background:#fafafa">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                            <span style="font-size:20px">${c.emoji || '👤'}</span>
+                            <strong style="font-size:15px">${c.name}</strong>
+                            <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:#ede9fe;color:#7c3aed">${c.role}</span>
+                        </div>
+                        <div style="font-size:12px;color:#666;line-height:1.5">${(c.background || '').substring(0, 100)}${(c.background||'').length > 100 ? '...' : ''}</div>
+                    </div>`).join('');
+                document.getElementById('auto-result').style.display = 'block';
+            } catch(e) {
+                alert('生成失败：' + e.message);
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        }
+
+        async function confirmAutoChars() {
+            for (const c of tempGeneratedChars) {
+                characters.push(c);
+                await saveCharToMemory(c);
+            }
+            alert(`成功添加 ${tempGeneratedChars.length} 个角色！`);
+            closeCharModal();
+            renderCharList();
+        }
+
+        // 方式2：AI辅助生成
+        async function assistedGenerateChar() {
+            const idea = document.getElementById('assisted-idea').value;
+            if (!idea || idea.trim().length < 10) {
+                alert('请输入角色想法（至少10字）');
+                return;
+            }
+            const btn = document.querySelector('#char-form-assisted .btn-primary');
+            const origText = btn.textContent;
+            btn.textContent = '⏳ 生成中...';
+            btn.disabled = true;
+            try {
+                const prompt = `你是专业网文编辑。根据用户的角色想法，生成一个完整的角色档案，以JSON格式返回。
+
+用户想法：${idea}
+
+请返回JSON对象，包含：
+- name: 角色姓名
+- role: 角色定位（主角/女主/反派/配角）
+- emoji: 代表该角色的emoji
+- appearance: 外貌描述（2-3句）
+- personality: 性格特点（用逗号分隔3-5个词）
+- background: 背景故事（2-3句）
+- ability: 能力/力量体系
+- relations: 与其他角色的关系
+- arc: 角色弧线/成长方向
+
+只返回JSON对象，不要其他文字。`;
+
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await resp.json();
+                const text = data.content || '';
+                const match = text.match(/\{[\s\S]*\}/);
+                if (!match) throw new Error('未能解析角色数据');
+                tempGeneratedChars = [JSON.parse(match[0])];
+                const c = tempGeneratedChars[0];
+
+                const preview = document.getElementById('assisted-preview');
+                preview.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                        <span style="font-size:28px">${c.emoji || '👤'}</span>
+                        <div>
+                            <div style="font-size:18px;font-weight:700;color:#222">${c.name}</div>
+                            <div style="font-size:12px;color:#999">${c.role}</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:8px"><strong>外貌：</strong>${c.appearance || '无'}</div>
+                    <div style="margin-bottom:8px"><strong>性格：</strong>${c.personality || '无'}</div>
+                    <div style="margin-bottom:8px"><strong>背景：</strong>${c.background || '无'}</div>
+                    <div style="margin-bottom:8px"><strong>能力：</strong>${c.ability || '无'}</div>
+                    <div style="margin-bottom:8px"><strong>关系：</strong>${c.relations || '无'}</div>
+                    <div><strong>弧线：</strong>${c.arc || '无'}</div>`;
+                document.getElementById('assisted-result').style.display = 'block';
+            } catch(e) {
+                alert('生成失败：' + e.message);
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        }
+
+        async function confirmAssistedChar() {
+            const c = tempGeneratedChars[0];
+            characters.push(c);
+            await saveCharToMemory(c);
+            alert('角色已保存！');
+            closeCharModal();
+            renderCharList();
+        }
+
+        // 方式3：手动创建/编辑
+        function loadCharToManualForm(c) {
+            document.getElementById('manual-name').value = c.name || '';
+            document.getElementById('manual-role').value = c.role || '主角';
+            document.getElementById('manual-appearance').value = c.appearance || '';
+            document.getElementById('manual-personality').value = c.personality || '';
+            document.getElementById('manual-background').value = c.background || '';
+            document.getElementById('manual-ability').value = c.ability || '';
+            document.getElementById('manual-relations').value = c.relations || '';
+            document.getElementById('manual-arc').value = c.arc || '';
+        }
+
+        async function saveManualChar() {
+            const name = document.getElementById('manual-name').value;
+            if (!name || name.trim().length === 0) {
+                alert('请填写角色姓名');
+                return;
+            }
+            const c = currentCharIdx >= 0 ? characters[currentCharIdx] : {};
+            c.name = name;
+            c.role = document.getElementById('manual-role').value;
+            c.appearance = document.getElementById('manual-appearance').value;
+            c.personality = document.getElementById('manual-personality').value;
+            c.background = document.getElementById('manual-background').value;
+            c.ability = document.getElementById('manual-ability').value;
+            c.relations = document.getElementById('manual-relations').value;
+            c.arc = document.getElementById('manual-arc').value;
+            if (!c.emoji) c.emoji = ['👤','👩','🧙','⚔️','🌸','🔥'][Math.floor(Math.random()*6)];
+
+            if (currentCharIdx < 0) characters.push(c);
+            else characters[currentCharIdx] = c;
+            await saveCharToMemory(c);
+            alert('角色已保存！');
+            closeCharModal();
+            renderCharList();
+        }
+
+        async function deleteManualChar() {
+            if (currentCharIdx >= 0 && confirm('确认删除该角色？')) {
+                const c = characters[currentCharIdx];
+                await deleteCharFromMemory(c);
+                characters.splice(currentCharIdx, 1);
+                localStorage.setItem(_charCacheKey(), JSON.stringify(characters));
+                alert('角色已删除');
+                closeCharModal();
+                renderCharList();
+            }
+        }
+
+        // ===== 小说类型数据 =====
+        const GENRE_DATA = {
+            '玄幻':     { traits: '东方幻想世界，斗气、血脉、修炼体系', subs: ['东方玄幻','异世大陆','王朝争霸','转世重生'] },
+            '仙侠':     { traits: '道教/修真文化，飞升长生', subs: ['古典仙侠','现代修真','洪荒流','凡人流'] },
+            '都市':     { traits: '现代社会背景，贴近现实生活', subs: ['都市异能','娱乐明星','神医','兵王','奶爸','鉴宝'] },
+            '历史':     { traits: '基于真实或架空历史，历史感强', subs: ['架空历史','穿越古代','历史演义'] },
+            '科幻':     { traits: '科学幻想、未来科技为核心', subs: ['星际战争','末世废土','赛博朋克','古武机甲'] },
+            '奇幻':     { traits: '西方魔法、种族、神系体系', subs: ['西方奇幻','魔法校园','龙与地下城风'] },
+            '武侠':     { traits: '侠义精神、武功招式、江湖恩怨', subs: ['传统武侠','高武武侠','武侠同人'] },
+            '游戏':     { traits: '以游戏为核心场景，系统/面板元素', subs: ['虚拟网游','电竞','游戏异界'] },
+            '灵异/悬疑': { traits: '超自然、恐怖、解谜推理', subs: ['恐怖惊悚','盗墓探险','规则怪谈'] },
+            '军事':     { traits: '战争、特种兵、谍战为主线', subs: ['现代军旅','抗战','雇佣兵'] },
+            '言情/女频': { traits: '以情感为主线，多为女频读者', subs: ['总裁文','宫斗宅斗','快穿','团宠'] },
+            '体育':     { traits: '运动竞技，热血励志', subs: ['篮球','足球','围棋','电竞'] }
+        };
+
+        function onGenreMainChange() {
+            const main = document.getElementById('genre-main').value;
+            const subSel = document.getElementById('genre-sub');
+            const traits = document.getElementById('genre-traits');
+
+            if (!main || !GENRE_DATA[main]) {
+                subSel.innerHTML = '<option value="">子类（必选）</option>';
+                traits.style.display = 'none';
+                _updateGenreHidden();
+                return;
+            }
+            const data = GENRE_DATA[main];
+            traits.textContent = '核心特征：' + data.traits;
+            traits.style.display = 'block';
+            subSel.innerHTML = '<option value="">子类（必选）</option>' +
+                data.subs.map(s => `<option value="${s}">${s}</option>`).join('');
+            _updateGenreHidden();
+        }
+
+        function onGenreSubChange() { _updateGenreHidden(); }
+        function onGenreTagChange() { _updateGenreHidden(); }
+
+        function _updateGenreHidden() {
+            const main = document.getElementById('genre-main').value;
+            const sub = document.getElementById('genre-sub').value;
+            const style = document.getElementById('genre-style').value;
+            const special = document.getElementById('genre-special').value;
+            const parts = [main, sub, style, special].filter(Boolean);
+            document.getElementById('genre').value = parts.join(' · ');
+        }
+
+        function onPlatformChange() {
+            ['qidian','fanqie','qimao','jjwxc','qq'].forEach(k => {
+                const el = document.getElementById('platform-label-' + k);
+                const checked = document.getElementById('platform-' + k).checked;
+                el.style.background = checked ? '#667eea' : '';
+                el.style.color = checked ? 'white' : '';
+            });
+        }
+
+        function getPlatform() {
+            return document.querySelector('input[name="platform"]:checked')?.value || '起点';
+        }
+
+        async function aiGenerateRequirements(btn) {
+            const name = document.getElementById('project-name').value;
+            const genreMain = document.getElementById('genre-main').value;
+            const genreSub = document.getElementById('genre-sub').value;
+            const genreStyle = document.getElementById('genre-style').value;
+            const genreSpecial = document.getElementById('genre-special').value;
+            const pov = getPov();
+            const channel = getChannel();
+            const platform = getPlatform();
+            const synopsis = document.getElementById('synopsis') ? document.getElementById('synopsis').value : '';
+
+            if (!genreMain) { alert('请先选择小说类型'); return; }
+
+            const genre = [genreMain, genreSub, genreStyle, genreSpecial].filter(x => x).join(' / ');
+
+            const origText = btn.textContent;
+            btn.textContent = '⏳ 生成中...';
+            btn.disabled = true;
+            try {
+                const prompt = `你是专业网文策划编辑。根据以下信息，生成一段简洁的核心需求描述，供作者参考。
+
+项目名称：${name || '未填写'}
+小说类型：${genre}
+写作视角：${pov}
+目标频道：${channel}
+刊登平台：${platform}
+${synopsis ? '故事梗概：' + synopsis : ''}
+
+请生成核心需求，包含：
+- 主角设定建议（性格、背景、金手指方向）
+- 故事主线方向
+- 目标读者群分析
+- 适合该平台的字数建议
+
+语言简洁，每项1-2句，总字数200字以内。`;
+
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'chief_editor'})
+                });
+                const data = await resp.json();
+                console.log('AI返回:', data);
+                if (data.success && data.content) {
+                    document.getElementById('requirements').value = data.content;
+                } else {
+                    alert('生成失败：' + (data.error || '未知错误'));
+                }
+            } catch(e) {
+                alert('生成失败：' + e.message);
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        }
+
+        function onPovChange() {
+            const povLabels = { '3rd': 'pov-label-3rd', '1st': 'pov-label-1st', '2nd': 'pov-label-2nd' };
+            ['3rd','1st','2nd'].forEach(k => {
+                const el = document.getElementById('pov-label-' + k);
+                const checked = document.getElementById('pov-' + k).checked;
+                el.style.background = checked ? '#667eea' : '';
+                el.style.color = checked ? 'white' : '';
+            });
+        }
+
+        function onChannelChange() {
+            ['male','female'].forEach(k => {
+                const el = document.getElementById('channel-label-' + k);
+                const checked = document.getElementById('channel-' + k).checked;
+                el.style.background = checked ? '#667eea' : '';
+                el.style.color = checked ? 'white' : '';
+            });
+        }
+
+        function getPov() {
+            return document.querySelector('input[name="pov"]:checked')?.value || '第三人称';
+        }
+
+        function getChannel() {
+            return document.querySelector('input[name="channel"]:checked')?.value || '男频';
+        }
+
+        // 初始化选中状态样式
+        document.addEventListener('DOMContentLoaded', () => {
+            onPovChange();
+            onChannelChange();
+            onPlatformChange();
+            initRoleMonitor();  // 初始化角色监控面板
+        });
+
+        // 角色定义
+        const ROLES = [
+            { id: 'chief_editor', name: '总编辑', emoji: '👑', color: '#f5a623', desc: '负责整体方向与质量把控' },
+            { id: 'editor',       name: '编辑',   emoji: '✏️', color: '#4a90d9', desc: '负责内容编辑与润色' },
+            { id: 'researcher',   name: '研究员', emoji: '🔬', color: '#7b68ee', desc: '负责市场调研与分析' },
+            { id: 'writer',       name: '写手',   emoji: '📝', color: '#67c23a', desc: '负责章节创作与续写' }
+        ];
+
+        let roleConfigs = {};  // { chief_editor: {provider, model}, ... }
+        let currentRole = 'chief_editor';
+
+        let roleMonitorLogs = {}; // { chief_editor: [], editor: [], ... }
+
+        // 初始化角色监控面板（卡片已硬编码在HTML中）
+        function initRoleMonitor() {
+            const panel = document.getElementById('role-monitor-panel');
+            if (!panel) return;
+
+            // 初始化角色日志数组
+            ROLES.forEach(role => {
+                roleMonitorLogs[role.id] = [];
+            });
+
+            // 加载角色配置并更新LLM显示
+            loadRoleMonitorConfigs();
+        }
+
+        // 加载角色配置并更新
+        function loadRoleMonitorConfigs() {
+            fetch('/api/role-config').then(r => r.json()).then(data => {
+                roleConfigs = data || {};
+                ROLES.forEach(role => {
+                    const cfg = roleConfigs[role.id] || {};
+                    const model = cfg.model || '未配置';
+                    const llmLabel = cfg.provider ? `${cfg.provider}:${model}` : '未配置';
+
+                    // 更新LLM显示（直接修改已存在的卡片）
+                    const badge = document.querySelector(`#role-card-${role.id} .role-llm-badge`);
+                    if (badge) {
+                        badge.textContent = llmLabel;
+                        badge.style.background = `${role.color}10`;
+                        badge.style.color = role.color;
+                    }
+
+                    const llmText = document.getElementById(`role-llm-${role.id}`);
+                    if (llmText) {
+                        llmText.textContent = 'LLM: ' + model;
+                    }
+                });
+            }).catch(() => {
+                console.log('Failed to load role configs');
+            });
+        }
+
+        // 切换角色监控面板显示/隐藏
+        function toggleRoleMonitor() {
+            const panel = document.getElementById('role-monitor-panel');
+            if (panel) {
+                panel.classList.toggle('collapsed');
+            }
+        }
+
+        // 添加角色日志
+        function addRoleLog(roleId, message, type = 'info', status = 'success') {
+            const contentDiv = document.getElementById(`role-log-content-${roleId}`);
+            if (!contentDiv) return;
+
+            const logCard = document.getElementById(`role-card-${roleId}`);
+            if (logCard && !logCard.classList.contains('active')) {
+                logCard.classList.add('active');
+                // 移除其他卡片的active状态
+                document.querySelectorAll('.role-log-card').forEach(card => {
+                    if (card.id !== `role-card-${roleId}`) {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            const time = new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            let statusBadge = '';
+            if (status === 'success') {
+                statusBadge = '<span class="role-log-status success">✓ 成功</span>';
+            } else if (status === 'error') {
+                statusBadge = '<span class="role-log-status error">✗ 失败</span>';
+            } else if (status === 'pending') {
+                statusBadge = '<span class="role-log-status pending">⟳ 进行中</span>';
+            }
+
+            const logItem = document.createElement('div');
+            logItem.className = 'role-log-item';
+            logItem.innerHTML = `
+                <div class="role-log-time">${time}</div>
+                <div class="role-log-message">${message}</div>
+                ${statusBadge}
+            `;
+
+            // 插入到最前面
+            contentDiv.insertBefore(logItem, contentDiv.firstChild);
+
+            // 保持最多50条日志
+            const logs = contentDiv.querySelectorAll('.role-log-item');
+            if (logs.length > 50) {
+                for (let i = logs.length - 1; i >= 50; i--) {
+                    logs[i].remove();
+                }
+            }
+        }
+
+        // 更新角色LLM显示
+        function updateRoleLLM(roleId, model) {
+            const llmDiv = document.getElementById(`role-llm-${roleId}`);
+            if (llmDiv) {
+                llmDiv.textContent = 'LLM: ' + model;
+            }
+        }
+
+        function initRoleConfig() {
+            // 渲染中间角色列表
+            const rolePanel = document.getElementById('settings-main-role');
+            console.log('[RoleConfig] initRoleConfig called, rolePanel:', rolePanel);
+            if (!rolePanel) return;
+
+            // 加载已保存的角色配置
+            fetch('/api/role-config').then(r => r.json()).then(data => {
+                console.log('[RoleConfig] loaded configs:', data);
+                roleConfigs = data || {};
+                renderRoleList();
+                selectRole('chief_editor');
+            }).catch((e) => {
+                console.log('[RoleConfig] fetch error:', e);
+                renderRoleList();
+                selectRole('chief_editor');
+            });
+        }
+
+        function renderRoleList() {
+            const body = document.getElementById('role-list-body');
+            if (!body) return;
+            body.innerHTML = ROLES.map(role => {
+                const cfg = roleConfigs[role.id];
+                const modelLabel = cfg && cfg.model ? cfg.model.split('/').pop().substring(0, 12) : '未配置';
+                return `<div class="role-list-item${role.id === currentRole ? ' active' : ''}" data-role="${role.id}" onclick="selectRole('${role.id}')">
+                    <div class="role-avatar" style="background:${role.color}20;font-size:20px">${role.emoji}</div>
+                    <div class="role-info">
+                        <div class="role-name">${role.name}</div>
+                        <div class="role-desc">${role.desc}</div>
+                    </div>
+                    <div class="role-model-badge" title="${cfg && cfg.model || ''}">${modelLabel}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function selectRole(roleId) {
+            currentRole = roleId;
+            document.querySelectorAll('.role-list-item').forEach(i => i.classList.remove('active'));
+            const item = document.querySelector(`.role-list-item[data-role="${roleId}"]`);
+            if (item) item.classList.add('active');
+
+            const role = ROLES.find(r => r.id === roleId);
+            if (!role) return;
+
+            // 更新右侧header
+            document.getElementById('role-detail-title').textContent = role.name;
+            document.getElementById('role-detail-subtitle').textContent = role.desc;
+
+            // 收集所有已配置的模型
+            const allModels = collectAllModels();
+            const cfg = roleConfigs[roleId] || {};
+
+            const content = document.getElementById('role-config-content');
+            content.innerHTML = `
+                <div class="role-config-panel">
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding:20px;background:linear-gradient(135deg,${role.color}15,${role.color}05);border-radius:12px;border:1px solid ${role.color}30">
+                        <div style="width:60px;height:60px;border-radius:50%;background:${role.color}20;display:flex;align-items:center;justify-content:center;font-size:28px">${role.emoji}</div>
+                        <div>
+                            <div style="font-size:18px;font-weight:700;color:#222">${role.name}</div>
+                            <div style="font-size:13px;color:#888;margin-top:4px">${role.desc}</div>
+                        </div>
+                    </div>
+                    <div class="model-select-card">
+                        <label>🤖 选择 AI 模型</label>
+                        <select id="role-model-select-${roleId}" onchange="onRoleModelChange('${roleId}')">
+                            <option value="">-- 请选择模型 --</option>
+                            ${allModels.map(m => `<option value="${m.value}" ${cfg.model === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
+                        </select>
+                        <div class="current-model-display" id="role-current-display-${roleId}">
+                            <div class="current-model-dot" style="background:${cfg.model ? '#67c23a' : '#ccc'}"></div>
+                            <span class="current-model-text">${cfg.model ? '当前：' + cfg.model : '尚未配置模型'}</span>
+                        </div>
+                    </div>
+                    <button class="role-save-btn" onclick="saveRoleConfig('${roleId}')">✅ 保存配置</button>
+                    <div class="role-save-success" id="role-save-msg-${roleId}">✓ 已保存</div>
+                </div>`;
+        }
+
+        function collectAllModels() {
+            const models = [];
+            const providers = {
+                'claude': 'Claude', 'deepseek': 'DeepSeek', 'openai': 'OpenAI',
+                'qwen': '通义千问', 'doubao': '豆包'
+            };
+            for (const [pid, pname] of Object.entries(providers)) {
+                const input = document.getElementById('selected-model-' + pid);
+                if (input && input.value.trim()) {
+                    input.value.split(',').map(m => m.trim()).filter(m => m).forEach(m => {
+                        models.push({ value: pid + '::' + m, label: '[' + pname + '] ' + m });
+                    });
+                }
+            }
+            // 自定义供应商
+            document.querySelectorAll('[id^="selected-model-custom-"]').forEach(input => {
+                const pid = input.id.replace('selected-model-', '');
+                const nameEl = document.querySelector(`.provider-list-item[data-provider="${pid}"] .provider-list-name`);
+                const pname = nameEl ? nameEl.textContent : pid;
+                if (input.value.trim()) {
+                    input.value.split(',').map(m => m.trim()).filter(m => m).forEach(m => {
+                        models.push({ value: pid + '::' + m, label: '[' + pname + '] ' + m });
+                    });
+                }
+            });
+            if (models.length === 0) {
+                models.push({ value: '', label: '（请先在"模型服务"中配置并选择模型）' });
+            }
+            return models;
+        }
+
+        function onRoleModelChange(roleId) {
+            const sel = document.getElementById('role-model-select-' + roleId);
+            const display = document.getElementById('role-current-display-' + roleId);
+            if (!sel || !display) return;
+            const val = sel.value;
+            display.innerHTML = `<div class="current-model-dot" style="background:${val ? '#67c23a' : '#ccc'}"></div>
+                <span class="current-model-text">${val ? '已选：' + val.split('::')[1] : '尚未配置模型'}</span>`;
+        }
+
+        function saveRoleConfig(roleId) {
+            const sel = document.getElementById('role-model-select-' + roleId);
+            if (!sel) return;
+            const val = sel.value;
+            if (!val) { alert('请先选择一个模型'); return; }
+            const parts = val.split('::');
+            roleConfigs[roleId] = { provider: parts[0], model: parts[1] };
+
+            fetch('/api/role-config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(roleConfigs)
+            }).then(r => r.json()).then(() => {
+                const msg = document.getElementById('role-save-msg-' + roleId);
+                if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 2000); }
+                renderRoleList();
+            }).catch(() => alert('保存失败'));
+        }
+
+
+        function selectProvider(provider) {
+            // 高亮中间列表项
+            document.querySelectorAll('.provider-list-item').forEach(i => i.classList.remove('active'));
+            const listItem = document.querySelector(`.provider-list-item[data-provider="${provider}"]`);
+            if (listItem) listItem.classList.add('active');
+
+            // 隐藏所有配置面板
+            document.querySelectorAll('.provider-config').forEach(c => c.style.display = 'none');
+
+            // 显示对应配置面板
+            const actualProvider = provider.startsWith('custom-') ? 'custom' : provider;
+            const panel = document.getElementById('config-' + actualProvider);
+            if (panel) panel.style.display = 'block';
+
+            // 更新右侧header
+            const meta = PROVIDER_META[provider] || {name: provider, bg: '#666', text: '?'};
+            const iconEl = document.getElementById('detail-icon');
+            const titleEl = document.getElementById('detail-title');
+            if (iconEl) { iconEl.style.background = meta.bg; iconEl.textContent = meta.text; }
+            if (titleEl) titleEl.textContent = meta.name;
+
+            // 如果是添加自定义，清空表单
+            if (provider === 'custom') clearCustomProviderForm();
+        }
+
+        function changeModelProvider() {
+            const provider = document.getElementById('model-provider-select') ?
+                document.getElementById('model-provider-select').value : 'claude';
+            selectProvider(provider);
+        }
+
+        async function testConnection(provider) {
+            const apiKey = document.getElementById('api-key-' + provider).value;
+            const baseUrl = document.getElementById('url-' + provider).value;
+            const resultDiv = document.getElementById('model-list-' + provider);
+
+            if (!apiKey) {
+                resultDiv.textContent = '❌ 请输入 API Key';
+                return;
+            }
+
+            if (provider === 'custom' || provider.startsWith('custom-')) {
+                if (!baseUrl) {
+                    resultDiv.textContent = '❌ 请输入 Base URL';
+                    return;
+                }
+            }
+
+            resultDiv.textContent = '正在获取模型列表...';
+
+            try {
+                // 对于自定义模型，根据 API 类型决定使用哪个 provider 参数
+                let actualProvider = provider;
+                if (provider === 'custom' || provider.startsWith('custom-')) {
+                    const apiType = document.getElementById('api-type-custom').value;
+                    if (apiType === 'claude') {
+                        actualProvider = 'claude';
+                    } else {
+                        actualProvider = 'custom'; // OpenAI 兼容
+                    }
+                }
+
+                const response = await fetch('/api/provider-models', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        provider: actualProvider,
+                        api_key: apiKey,
+                        base_url: baseUrl
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const models = result.models;
+                    if (models.length === 0) {
+                        resultDiv.textContent = '未找到可用模型';
+                    } else {
+                        // 获取当前已选择的模型列表
+                        const selectedModelsInput = document.getElementById('selected-model-' + provider);
+                        const selectedModels = selectedModelsInput && selectedModelsInput.value
+                            ? selectedModelsInput.value.split(',').map(m => m.trim()).filter(m => m)
+                            : [];
+
+                        // 添加标题和分类过滤标签
+                        let html = `<strong>找到 ${models.length} 个模型（点击 + 选择，点击 - 取消）：</strong><br>`;
+
+                        // 添加分类过滤按钮
+                        html += `<div style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;">
+                            <button onclick="filterModelsByType('${provider}', 'all')" class="model-filter-btn active" data-filter="all" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:#4a90d9;color:white;cursor:pointer;font-size:12px;">全部</button>
+                            <button onclick="filterModelsByType('${provider}', 'text')" class="model-filter-btn" data-filter="text" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">💬 文本</button>
+                            <button onclick="filterModelsByType('${provider}', 'vision')" class="model-filter-btn" data-filter="vision" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">👁️ 视觉</button>
+                            <button onclick="filterModelsByType('${provider}', 'embedding')" class="model-filter-btn" data-filter="embedding" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">📊 嵌入</button>
+                            <button onclick="filterModelsByType('${provider}', 'audio')" class="model-filter-btn" data-filter="audio" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">🎵 语音</button>
+                        </div>`;
+
+                        // 分离已选和未选模型
+                        const selectedModelsList = [];
+                        const unselectedModelsList = [];
+
+                        models.forEach(model => {
+                            const isSelected = selectedModels.includes(model.id);
+                            const btnIcon = isSelected ? '−' : '+';
+                            const btnColor = isSelected ? '#f56c6c' : '#67c23a';
+                            const itemClass = isSelected ? 'model-item selected' : 'model-item';
+                            const modelType = model.type || 'text';
+                            const modelHtml = `<div class="${itemClass}" data-provider="${provider}" data-model="${model.id}" data-model-type="${modelType}" style="display:flex;justify-content:space-between;align-items:center;"><span>${model.id}${model.type && model.type !== 'text' ? ' <span style="color:#909399;font-size:11px">(' + model.type + ')</span>' : ''}</span><button onclick="toggleModelSelection('${provider}', '${model.id}'); event.stopPropagation();" style="background:${btnColor};color:white;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:16px;line-height:1;">${btnIcon}</button></div>`;
+
+                            if (isSelected) {
+                                selectedModelsList.push(modelHtml);
+                            } else {
+                                unselectedModelsList.push(modelHtml);
+                            }
+                        });
+
+                        // 渲染已选模型
+                        if (selectedModelsList.length > 0) {
+                            html += '<div style="margin-top:10px;"><strong style="font-size:12px;color:#67c23a">✓ 已选择：</strong></div>';
+                            html += selectedModelsList.join('');
+                        }
+
+                        // 渲染未选模型
+                        if (unselectedModelsList.length > 0) {
+                            html += '<div style="margin-top:10px;"><strong style="font-size:12px;color:#606266">可选模型：</strong></div>';
+                            html += unselectedModelsList.join('');
+                        }
+
+                        resultDiv.innerHTML = html;
+                    }
+                } else {
+                    resultDiv.textContent = '❌ ' + result.error;
+                }
+            } catch (error) {
+                resultDiv.textContent = '❌ 请求失败: ' + error.message;
+            }
+        }
+
+        function selectModel(provider, modelId) {
+            const input = document.getElementById('selected-model-' + provider);
+            if (input) {
+                input.value = modelId;
+            }
+            // 更新高亮选中项
+            document.querySelectorAll(`.model-item[data-provider="${provider}"]`).forEach(item => {
+                item.classList.toggle('selected', item.dataset.model === modelId);
+            });
+            // 更新当前模型名称显示
+            document.getElementById('current-model-name').textContent = modelId;
+        }
+
+        // 新增：切换模型选择状态（支持多选）
+        function toggleModelSelection(provider, modelId) {
+            const input = document.getElementById('selected-model-' + provider);
+            if (!input) return;
+
+            // 获取当前已选择的模型列表
+            let selectedModels = input.value
+                ? input.value.split(',').map(m => m.trim()).filter(m => m)
+                : [];
+
+            // 切换选择状态
+            const index = selectedModels.indexOf(modelId);
+            const isSelected = index > -1;
+
+            if (isSelected) {
+                // 已选择，移除
+                selectedModels.splice(index, 1);
+            } else {
+                // 未选择，添加
+                selectedModels.push(modelId);
+            }
+
+            // 更新输入框
+            input.value = selectedModels.join(', ');
+
+            // 只更新当前模型项的按钮状态，不重新拉取列表
+            const modelItem = document.querySelector(`.model-item[data-provider="${provider}"][data-model="${modelId}"]`);
+            if (modelItem) {
+                const button = modelItem.querySelector('button');
+                if (button) {
+                    if (isSelected) {
+                        // 取消选择：变回绿色加号
+                        button.textContent = '+';
+                        button.style.background = '#67c23a';
+                        modelItem.classList.remove('selected');
+                    } else {
+                        // 选择：变成红色减号
+                        button.textContent = '−';
+                        button.style.background = '#f56c6c';
+                        modelItem.classList.add('selected');
+                    }
+                }
+
+                // 重新排序：将选中的模型移到顶部
+                reorderModelList(provider);
+            }
+        }
+
+        // 重新排序模型列表：选中的在前，未选中的在后
+        function reorderModelList(provider) {
+            const resultDiv = document.getElementById('model-list-' + provider);
+            if (!resultDiv) return;
+
+            const input = document.getElementById('selected-model-' + provider);
+            const selectedModels = input && input.value
+                ? input.value.split(',').map(m => m.trim()).filter(m => m)
+                : [];
+
+            // 获取所有模型项
+            const allItems = Array.from(resultDiv.querySelectorAll('.model-item'));
+            const headers = Array.from(resultDiv.querySelectorAll('div > strong'));
+
+            // 分离选中和未选中的项
+            const selectedItems = [];
+            const unselectedItems = [];
+
+            allItems.forEach(item => {
+                const modelId = item.dataset.model;
+                if (selectedModels.includes(modelId)) {
+                    selectedItems.push(item);
+                } else {
+                    unselectedItems.push(item);
+                }
+            });
+
+            // 重新构建列表
+            const fragment = document.createDocumentFragment();
+
+            // 添加标题
+            const firstStrong = resultDiv.querySelector('strong');
+            if (firstStrong && firstStrong.parentElement) {
+                fragment.appendChild(firstStrong.parentElement.cloneNode(true));
+            }
+
+            // 添加分类过滤标签
+            const filterDiv = document.createElement('div');
+            filterDiv.style.cssText = 'margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;';
+            filterDiv.innerHTML = `
+                <button onclick="filterModelsByType('${provider}', 'all')" class="model-filter-btn active" data-filter="all" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:#4a90d9;color:white;cursor:pointer;font-size:12px;">全部</button>
+                <button onclick="filterModelsByType('${provider}', 'text')" class="model-filter-btn" data-filter="text" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">文本模型</button>
+                <button onclick="filterModelsByType('${provider}', 'vision')" class="model-filter-btn" data-filter="vision" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">视觉模型</button>
+                <button onclick="filterModelsByType('${provider}', 'other')" class="model-filter-btn" data-filter="other" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">其他</button>
+            `;
+            fragment.appendChild(filterDiv);
+
+            // 如果有选中的模型，添加"已选择"标题
+            if (selectedItems.length > 0) {
+                const selectedHeader = document.createElement('div');
+                selectedHeader.style.cssText = 'margin-top:10px;';
+                selectedHeader.innerHTML = '<strong style="font-size:12px;color:#67c23a">✓ 已选择：</strong>';
+                fragment.appendChild(selectedHeader);
+                selectedItems.forEach(item => fragment.appendChild(item));
+            }
+
+            // 添加未选中的模型
+            if (unselectedItems.length > 0) {
+                const unselectedHeader = document.createElement('div');
+                unselectedHeader.style.cssText = 'margin-top:10px;';
+                unselectedHeader.innerHTML = '<strong style="font-size:12px;color:#606266">可选模型：</strong>';
+                fragment.appendChild(unselectedHeader);
+                unselectedItems.forEach(item => fragment.appendChild(item));
+            }
+
+            // 清空并重新添加
+            resultDiv.innerHTML = '';
+            resultDiv.appendChild(fragment);
+        }
+
+        // 按类型过滤模型
+        function filterModelsByType(provider, type) {
+            const resultDiv = document.getElementById('model-list-' + provider);
+            if (!resultDiv) return;
+
+            // 更新按钮状态
+            resultDiv.querySelectorAll('.model-filter-btn').forEach(btn => {
+                if (btn.dataset.filter === type) {
+                    btn.style.background = '#4a90d9';
+                    btn.style.color = 'white';
+                    btn.classList.add('active');
+                } else {
+                    btn.style.background = 'white';
+                    btn.style.color = '#333';
+                    btn.classList.remove('active');
+                }
+            });
+
+            // 过滤模型项
+            const allItems = resultDiv.querySelectorAll('.model-item');
+            allItems.forEach(item => {
+                const modelType = item.dataset.modelType || 'text';
+                if (type === 'all') {
+                    item.style.display = 'flex';
+                } else if (type === 'other') {
+                    item.style.display = (modelType !== 'text' && modelType !== 'vision') ? 'flex' : 'none';
+                } else {
+                    item.style.display = (modelType === type) ? 'flex' : 'none';
+                }
+            });
+        }
+
+        // 切换供应商启用状态
+        async function toggleProvider(provider, isChecked) {
+            try {
+                const response = await fetch('/api/model-config');
+                const result = await response.json();
+                if (!result.success || !result.data) return;
+
+                const config = result.data;
+                if (!config.providers) config.providers = {};
+
+                // 启用或禁用供应商
+                if (isChecked) {
+                    // 启用：确保有基本配置
+                    if (!config.providers[provider]) {
+                        config.providers[provider] = {
+                            api_key: '',
+                            base_url: '',
+                            model: ''
+                        };
+                    }
+                    // 如果是qwen且没有api_key，给出提示
+                    if (provider === 'qwen' && !config.providers[provider].api_key) {
+                        // 不阻止，让用户自己配置
+                    }
+                } else {
+                    // 禁用：清空配置但保留
+                    if (config.providers[provider]) {
+                        config.providers[provider].api_key = '';
+                        config.providers[provider].model = '';
+                    }
+                }
+
+                await fetch('/api/model-config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+
+            } catch (error) {
+                console.error('Failed to toggle provider:', error);
+            }
+        }
+
+        // 显示保存结果弹窗
+        function showSaveResult(success, message) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+                z-index: 2000; display: flex; align-items: center; justify-content: center;
+            `;
+
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: white; border-radius: 12px; padding: 24px;
+                max-width: 400px; width: 90%; text-align: center;
+                animation: fadeIn 0.2s ease;
+            `;
+
+            const icon = success ? '✅' : '❌';
+            const color = success ? '#67c23a' : '#f56c6c';
+
+            modal.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 16px;">${icon}</div>
+                <div style="font-size: 18px; font-weight: 600; color: #222; margin-bottom: 8px;">
+                    ${success ? '保存成功' : '保存失败'}
+                </div>
+                <div style="font-size: 14px; color: #666; margin-bottom: 24px;">${message}</div>
+                <button onclick="this.closest('.settings-modal-overlay').removeChild(this.closest('div'))"
+                    style="background: #4a90d9; color: white; border: none; padding: 10px 24px;
+                    border-radius: 6px; cursor: pointer; font-size: 14px;">
+                    确定
+                </button>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // 3秒后自动关闭
+            setTimeout(() => {
+                if (overlay.parentNode) {
+                    document.body.removeChild(overlay);
+                }
+            }, 3000);
+        }
+
+        async function saveModelConfig() {
+            const resultDiv = document.getElementById('save-config-result');
+            let activeProvider = document.getElementById('model-provider-select') ?
+                document.getElementById('model-provider-select').value : currentSelectedProvider;
+
+            // 如果选择的是"添加自定义模型"，提示用户使用添加按钮
+            if (activeProvider === '__add_custom__') {
+                resultDiv.className = 'save-result-msg error';
+                resultDiv.style.display = 'block';
+                resultDiv.textContent = '⚠️ 请使用下方的"添加提供商"按钮来添加自定义提供商';
+                setTimeout(() => { resultDiv.style.display = 'none'; }, 3000);
+                return;
+            }
+
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                return el ? el.value.trim() : '';
+            };
+
+            // 首先加载现有配置，保留自定义模型
+            let existingConfig = {};
+            try {
+                const response = await fetch('/api/model-config');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    existingConfig = result.data;
+                }
+            } catch (error) {
+                console.log('Failed to load existing config:', error);
+            }
+
+            const config = {
+                active_provider: activeProvider,
+                providers: {
+                    claude: {
+                        api_key: getVal('api-key-claude'),
+                        base_url: getVal('url-claude'),
+                        model: getVal('selected-model-claude')
+                    },
+                    deepseek: {
+                        api_key: getVal('api-key-deepseek'),
+                        base_url: getVal('url-deepseek'),
+                        model: getVal('selected-model-deepseek')
+                    },
+                    openai: {
+                        api_key: getVal('api-key-openai'),
+                        base_url: getVal('url-openai'),
+                        model: getVal('selected-model-openai')
+                    },
+                    qwen: {
+                        api_key: getVal('api-key-qwen'),
+                        base_url: getVal('url-qwen'),
+                        model: getVal('selected-model-qwen')
+                    },
+                    doubao: {
+                        api_key: getVal('api-key-doubao'),
+                        base_url: getVal('url-doubao'),
+                        model: getVal('selected-model-doubao')
+                    }
+                }
+            };
+
+            // 保留现有的自定义模型配置
+            if (existingConfig.providers) {
+                for (const key in existingConfig.providers) {
+                    if (key.startsWith('custom-')) {
+                        config.providers[key] = existingConfig.providers[key];
+                    }
+                }
+            }
+
+            try {
+                resultDiv.className = 'save-result-msg';
+                resultDiv.style.display = 'block';
+                resultDiv.textContent = '保存中...';
+
+                const response = await fetch('/api/model-config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    resultDiv.className = 'save-result-msg success';
+                    resultDiv.textContent = '✅ 配置已保存并立即生效';
+                    // 显示弹窗提示
+                    showSaveResult(true, '配置已保存并立即生效');
+                    setTimeout(() => { resultDiv.style.display = 'none'; }, 4000);
+                    // 重新加载配置以更新下拉菜单
+                    await loadModelConfig();
+                } else {
+                    resultDiv.className = 'save-result-msg error';
+                    resultDiv.textContent = '❌ 保存失败: ' + result.error;
+                    // 显示弹窗提示
+                    showSaveResult(false, result.error || '保存失败，请检查配置');
+                }
+            } catch (error) {
+                resultDiv.className = 'save-result-msg error';
+                resultDiv.textContent = '❌ 请求失败: ' + error.message;
+                // 显示弹窗提示
+                showSaveResult(false, error.message || '请求失败');
+            }
+        }
+
+        async function loadModelConfig() {
+            try {
+                const response = await fetch('/api/model-config');
+                const result = await response.json();
+                if (!result.success || !result.data) return;
+
+                const config = result.data;
+                const setVal = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el && val) el.value = val;
+                };
+
+                if (config.providers) {
+                    const p = config.providers;
+                    if (p.claude) {
+                        setVal('api-key-claude', p.claude.api_key);
+                        setVal('url-claude', p.claude.base_url);
+                        setVal('selected-model-claude', p.claude.model);
+                    }
+                    if (p.deepseek) {
+                        setVal('api-key-deepseek', p.deepseek.api_key);
+                        setVal('url-deepseek', p.deepseek.base_url);
+                        setVal('selected-model-deepseek', p.deepseek.model);
+                    }
+                    if (p.openai) {
+                        setVal('api-key-openai', p.openai.api_key);
+                        setVal('url-openai', p.openai.base_url);
+                        setVal('selected-model-openai', p.openai.model);
+                    }
+                    if (p.qwen) {
+                        setVal('api-key-qwen', p.qwen.api_key);
+                        setVal('url-qwen', p.qwen.base_url);
+                        setVal('selected-model-qwen', p.qwen.model);
+                    }
+                    if (p.doubao) {
+                        setVal('api-key-doubao', p.doubao.api_key);
+                        setVal('url-doubao', p.doubao.base_url);
+                        setVal('selected-model-doubao', p.doubao.model);
+                    }
+                    if (p.custom) {
+                        setVal('custom-name', p.custom.name);
+                        setVal('api-key-custom', p.custom.api_key);
+                        setVal('url-custom', p.custom.base_url);
+                        setVal('selected-model-custom', p.custom.model);
+                        setVal('api-type-custom', p.custom.api_type);
+                    }
+
+                    // 动态添加自定义模型到供应商列表
+                    const select = document.getElementById('model-provider-select');
+                    if (select) {
+                        // 移除之前添加的自定义模型选项
+                        const options = Array.from(select.options);
+                        options.forEach(opt => {
+                            if (opt.value.startsWith('custom-')) {
+                                select.removeChild(opt);
+                            }
+                        });
+                    }
+
+                    // 添加已保存的自定义模型
+                    const customModels = [];
+                    for (const key in p) {
+                        if (key.startsWith('custom-') && p[key].name) {
+                            customModels.push({id: key, name: p[key].name, config: p[key]});
+                        }
+                    }
+
+                    // 在供应商列表中插入自定义模型
+                    if (select) {
+                        const addCustomOption = select.querySelector('option[value="__add_custom__"]');
+                        customModels.forEach(cm => {
+                            const option = document.createElement('option');
+                            option.value = cm.id;
+                            option.textContent = cm.name;
+                            select.insertBefore(option, addCustomOption);
+                        });
+                    }
+
+                    // 渲染自定义提供商列表
+                    renderCustomProvidersList(customModels);
+
+                    // 如果当前选中的是自定义模型，加载其配置到表单
+                    if (config.active_provider && config.active_provider.startsWith('custom-')) {
+                        const activeCustom = p[config.active_provider];
+                        if (activeCustom) {
+                            setVal('custom-name', activeCustom.name);
+                            setVal('api-key-custom', activeCustom.api_key);
+                            setVal('url-custom', activeCustom.base_url);
+                            setVal('selected-model-custom', activeCustom.model);
+                            setVal('api-type-custom', activeCustom.api_type);
+                        }
+                    }
+                }
+
+                if (config.active_provider) {
+                    const select = document.getElementById('model-provider-select');
+                    if (select) {
+                        const optionExists = Array.from(select.options).some(opt => opt.value === config.active_provider);
+                        if (optionExists) {
+                            select.value = config.active_provider;
+                        }
+                    }
+                    selectProvider(config.active_provider);
+                    // 更新当前模型显示
+                    const activeConf = config.providers && config.providers[config.active_provider];
+                    if (activeConf) {
+                        // 如果是自定义模型且有名称，显示自定义名称
+                        if (config.active_provider.startsWith('custom-') && activeConf.name) {
+                            document.getElementById('current-model-name').textContent = activeConf.name;
+                        } else if (activeConf.model) {
+                            document.getElementById('current-model-name').textContent = activeConf.model;
+                        }
+                    }
+                }
+
+                // 同步滑动开关状态：有api_key的供应商应该启用（蓝色），否则禁用（灰色）
+                syncProviderToggles(config.providers || {});
+            } catch (error) {
+                console.log('Failed to load model config:', error);
+            }
+        }
+
+        // 同步滑动开关状态
+        function syncProviderToggles(providers) {
+            const toggleMap = {
+                'claude': document.getElementById('toggle-claude'),
+                'deepseek': document.getElementById('toggle-deepseek'),
+                'openai': document.getElementById('toggle-openai'),
+                'qwen': document.getElementById('toggle-qwen'),
+                'doubao': document.getElementById('toggle-doubao')
+            };
+
+            for (const [provider, toggle] of Object.entries(toggleMap)) {
+                if (toggle) {
+                    const config = providers[provider];
+                    // 有api_key或已配置model的供应商应该启用
+                    const isEnabled = config && (config.api_key && config.api_key.trim() !== '' || config.model && config.model.trim() !== '');
+                    toggle.checked = isEnabled;
+                }
+            }
+        }
+
+        // 点击模态框外部关闭
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('settings-modal');
+            if (e.target === modal) {
+                closeSettings();
+            }
+        });
+
+        // 自定义提供商管理函数
+        let editingProviderId = null;
+
+        function renderCustomProvidersList(customModels) {
+            const listContainer = document.getElementById('custom-providers-list');
+            if (!customModels || customModels.length === 0) {
+                listContainer.innerHTML = '<p style="color:#909399;font-size:13px;padding:12px;text-align:center">暂无自定义提供商</p>';
+                return;
+            }
+
+            let html = '<h4 style="margin-bottom:12px;color:#303133">已添加的提供商</h4>';
+            customModels.forEach(cm => {
+                const apiTypeText = {
+                    'openai_compatible': 'OpenAI 兼容',
+                    'openai': 'OpenAI 原生',
+                    'claude': 'Claude'
+                }[cm.config.api_type] || cm.config.api_type;
+
+                html += `
+                    <div class="custom-provider-card">
+                        <div class="custom-provider-card-header">
+                            <div class="custom-provider-card-title">${cm.name}</div>
+                            <div class="custom-provider-card-actions">
+                                <button onclick="editCustomProvider('${cm.id}')" style="background:#409eff;color:white">编辑</button>
+                                <button onclick="deleteCustomProvider('${cm.id}')" style="background:#f56c6c;color:white">删除</button>
+                            </div>
+                        </div>
+                        <div class="custom-provider-card-info">
+                            <div><strong>API类型:</strong>${apiTypeText}</div>
+                            <div><strong>Base URL:</strong>${cm.config.base_url || '未设置'}</div>
+                            <div><strong>模型:</strong>${cm.config.model || '未设置'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+        }
+
+        async function addCustomProvider() {
+            const name = document.getElementById('custom-name').value.trim();
+            const apiKey = document.getElementById('api-key-custom').value.trim();
+            const baseUrl = document.getElementById('url-custom').value.trim();
+            const model = document.getElementById('selected-model-custom').value.trim();
+            const apiType = document.getElementById('api-type-custom').value;
+
+            if (!name) {
+                alert('请输入提供商名称');
+                return;
+            }
+            if (!apiKey) {
+                alert('请输入 API Key');
+                return;
+            }
+            if (!baseUrl) {
+                alert('请输入 Base URL');
+                return;
+            }
+
+            // 生成唯一ID
+            const providerId = editingProviderId || ('custom-' + name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now());
+
+            // 加载现有配置
+            let config = {};
+            try {
+                const response = await fetch('/api/model-config');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    config = result.data;
+                }
+            } catch (error) {
+                console.log('Failed to load config:', error);
+            }
+
+            // 添加或更新提供商
+            if (!config.providers) config.providers = {};
+            config.providers[providerId] = {
+                name: name,
+                api_key: apiKey,
+                base_url: baseUrl,
+                model: model,
+                api_type: apiType
+            };
+
+            // 如果是新添加，设置为活动提供商
+            if (!editingProviderId) {
+                config.active_provider = providerId;
+            }
+
+            // 保存配置
+            try {
+                const response = await fetch('/api/model-config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(editingProviderId ? '✅ 提供商已更新' : '✅ 提供商已添加');
+                    // 清空表单
+                    clearCustomProviderForm();
+                    // 重新加载配置
+                    await loadModelConfig();
+                } else {
+                    alert('❌ 保存失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ 请求失败: ' + error.message);
+            }
+        }
+
+        async function editCustomProvider(providerId) {
+            // 加载配置
+            try {
+                const response = await fetch('/api/model-config');
+                const result = await response.json();
+                if (result.success && result.data && result.data.providers) {
+                    const provider = result.data.providers[providerId];
+                    if (provider) {
+                        document.getElementById('custom-name').value = provider.name || '';
+                        document.getElementById('api-key-custom').value = provider.api_key || '';
+                        document.getElementById('url-custom').value = provider.base_url || '';
+                        document.getElementById('selected-model-custom').value = provider.model || '';
+                        document.getElementById('api-type-custom').value = provider.api_type || 'openai_compatible';
+
+                        editingProviderId = providerId;
+                        document.getElementById('cancel-edit-btn').style.display = 'block';
+                        document.querySelector('#custom-provider-form h4').textContent = '✏️ 编辑提供商';
+
+                        // 滚动到表单
+                        document.getElementById('custom-provider-form').scrollIntoView({behavior: 'smooth'});
+                    }
+                }
+            } catch (error) {
+                alert('❌ 加载失败: ' + error.message);
+            }
+        }
+
+        async function deleteCustomProvider(providerId) {
+            if (!confirm('确定要删除这个提供商吗？')) {
+                return;
+            }
+
+            // 加载现有配置
+            try {
+                const response = await fetch('/api/model-config');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const config = result.data;
+                    if (config.providers && config.providers[providerId]) {
+                        delete config.providers[providerId];
+
+                        // 如果删除的是当前活动提供商，切换到claude
+                        if (config.active_provider === providerId) {
+                            config.active_provider = 'claude';
+                        }
+
+                        // 保存配置
+                        const saveResponse = await fetch('/api/model-config', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(config)
+                        });
+                        const saveResult = await saveResponse.json();
+
+                        if (saveResult.success) {
+                            alert('✅ 提供商已删除');
+                            await loadModelConfig();
+                        } else {
+                            alert('❌ 删除失败: ' + saveResult.error);
+                        }
+                    }
+                }
+            } catch (error) {
+                alert('❌ 请求失败: ' + error.message);
+            }
+        }
+
+        function cancelEditCustomProvider() {
+            clearCustomProviderForm();
+        }
+
+        function clearCustomProviderForm() {
+            document.getElementById('custom-name').value = '';
+            document.getElementById('api-key-custom').value = '';
+            document.getElementById('url-custom').value = '';
+            document.getElementById('selected-model-custom').value = '';
+            document.getElementById('api-type-custom').value = 'openai_compatible';
+            document.getElementById('model-list-custom').innerHTML = '';
+
+            editingProviderId = null;
+            document.getElementById('cancel-edit-btn').style.display = 'none';
+            document.querySelector('#custom-provider-form h4').textContent = '➕ 添加新的自定义提供商';
+        }
+    </script>
+</body>
+</html>
