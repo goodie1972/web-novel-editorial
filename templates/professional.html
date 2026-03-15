@@ -8,7 +8,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; }
         .navbar { height: 56px; background: linear-gradient(135deg, #4a90d9, #6ba3e0); color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
-        .main { display: flex; height: calc(100vh - 56px); }
+        .main { display: flex; height: calc(100vh - 56px); margin-right: 320px; }
+        .main.no-monitor { margin-right: 0; }
         .sidebar { width: 240px; background: white; border-right: 1px solid #e4e7ed; padding: 20px 0; display: flex; flex-direction: column; }
         .stage-item { padding: 14px 20px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; }
         .stage-item.active { background: #f0f7ff; border-left-color: #4a90d9; color: #4a90d9; font-weight: 500; }
@@ -2661,8 +2662,15 @@ ${synopsis ? '故事梗概：' + synopsis : ''}
         // 切换角色监控面板显示/隐藏
         function toggleRoleMonitor() {
             const panel = document.getElementById('role-monitor-panel');
+            const main = document.querySelector('.main');
             if (panel) {
                 panel.classList.toggle('collapsed');
+                // 当面板折叠时，移除 main 的 margin-right
+                if (panel.classList.contains('collapsed')) {
+                    main.classList.add('no-monitor');
+                } else {
+                    main.classList.remove('no-monitor');
+                }
             }
         }
 
