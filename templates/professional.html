@@ -2682,8 +2682,13 @@ ${synopsis ? '故事梗概：' + synopsis : ''}
 
         // 添加角色日志
         function addRoleLog(roleId, message, type = 'info', status = 'success') {
+            console.log('[addRoleLog] Called with:', { roleId, message, type, status });
             const contentDiv = document.getElementById(`role-log-content-${roleId}`);
-            if (!contentDiv) return;
+            console.log('[addRoleLog] contentDiv:', contentDiv);
+            if (!contentDiv) {
+                console.error('[addRoleLog] contentDiv not found for roleId:', roleId);
+                return;
+            }
 
             const logCard = document.getElementById(`role-card-${roleId}`);
             if (logCard && !logCard.classList.contains('active')) {
