@@ -511,12 +511,10 @@
                         <button class="btn" style="margin-top: 8px;" onclick="generateCreativeSuggestions()">AI生成创意建议</button>
                     </div>
 
-                    <div class="form-group">
-                        <label>AI生成结果</label>
-                        <div class="output-area" id="stage2-output">等待生成...</div>
+                    <div style="display:flex;gap:10px;margin-top:16px">
+                        <button class="btn" onclick="saveStage2Results()">💾 保存调研结果</button>
+                        <button class="btn btn-success" onclick="completeStage2()">完成调研，进入团队讨论</button>
                     </div>
-
-                    <button class="btn" onclick="completeStage2()">完成调研，进入团队讨论</button>
                 </div>
             </div>
 
@@ -1299,6 +1297,42 @@
             }
         }
 
+        async function saveStage2Results() {
+            const market = document.getElementById('market-analysis').value;
+            const ranking = document.getElementById('ranking-research').value;
+            const analysis = document.getElementById('novel-analysis').value;
+            const suggestions = document.getElementById('creative-suggestions').value;
+
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            try {
+                let count = 0;
+                if (market) {
+                    await memoryClient.addDocument('plot', '市场分析', market);
+                    count++;
+                }
+                if (ranking) {
+                    await memoryClient.addDocument('plot', '榜单调研', ranking);
+                    count++;
+                }
+                if (analysis) {
+                    await memoryClient.addDocument('plot', '拆文分析', analysis);
+                    count++;
+                }
+                if (suggestions) {
+                    await memoryClient.addDocument('plot', '创意建议', suggestions);
+                    count++;
+                }
+                alert('✅ 已保存 ' + count + ' 项调研结果到项目记忆库');
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+                console.error('保存调研结果失败:', error);
+            }
+        }
+
         async function completeStage2() {
             const market = document.getElementById('market-analysis').value;
             const ranking = document.getElementById('ranking-research').value;
@@ -1335,7 +1369,7 @@
 
             outputArea.textContent = '正在生成榜单调研...';
 
-            addRoleLog('chief_editor', '开始生成榜单调研<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
+            addRoleLog('researcher', '开始生成榜单调研<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
 
             const prompt = `作为网文榜单分析师，请针对【${genre}】类型，调研当前热门榜单作品。
 
@@ -1352,23 +1386,23 @@
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'chief_editor'})
+                    body: JSON.stringify({prompt, role: 'researcher'})
                 });
 
-                addRoleLog('chief_editor', '正在调用总编辑角色...', 'info', 'pending');
+                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('ranking-research').value = result.content;
                     outputArea.textContent = '✅ 榜单调研已生成并填入';
-                    addRoleLog('chief_editor', '✅ 榜单调研生成完成<br><span class="response">内容已填入榜单调研框</span>', 'success', 'success');
+                    addRoleLog('researcher', '✅ 榜单调研生成完成<br><span class="response">内容已填入榜单调研框</span>', 'success', 'success');
                 } else {
                     outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
                 outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
@@ -1380,7 +1414,7 @@
             outputArea.textContent = '正在生成市场分析...';
 
             // 添加角色日志
-            addRoleLog('chief_editor', '开始生成市场分析<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
+            addRoleLog('researcher', '开始生成市场分析<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
 
             const prompt = `作为网文市场分析师，请针对【${genre}】类型小说进行市场分析。
 
@@ -1399,24 +1433,24 @@ ${requirements}
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'chief_editor'})
+                    body: JSON.stringify({prompt, role: 'researcher'})
                 });
 
                 // 更新角色日志状态
-                addRoleLog('chief_editor', '正在调用总编辑角色...', 'info', 'pending');
+                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('market-analysis').value = result.content;
                     outputArea.textContent = '✅ 市场分析已生成并填入';
-                    addRoleLog('chief_editor', '✅ 市场分析生成完成<br><span class="response">内容已填入市场分析框</span>', 'success', 'success');
+                    addRoleLog('researcher', '✅ 市场分析生成完成<br><span class="response">内容已填入市场分析框</span>', 'success', 'success');
                 } else {
                     outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
                 outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
@@ -1427,7 +1461,7 @@ ${requirements}
             outputArea.textContent = '正在生成拆文分析...';
 
             // 添加角色日志
-            addRoleLog('chief_editor', '开始生成拆文分析<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
+            addRoleLog('researcher', '开始生成拆文分析<br><span class="prompt">类型: ' + genre + '</span>', 'pending', 'pending');
 
             const prompt = `作为网文拆解专家，请针对【${genre}】类型，拆解分析3部优秀作品。
 
@@ -1444,23 +1478,23 @@ ${requirements}
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'chief_editor'})
+                    body: JSON.stringify({prompt, role: 'researcher'})
                 });
 
-                addRoleLog('chief_editor', '正在调用总编辑角色...', 'info', 'pending');
+                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('novel-analysis').value = result.content;
                     outputArea.textContent = '✅ 拆文分析已生成并填入';
-                    addRoleLog('chief_editor', '✅ 拆文分析生成完成<br><span class="response">内容已填入拆文分析框</span>', 'success', 'success');
+                    addRoleLog('researcher', '✅ 拆文分析生成完成<br><span class="response">内容已填入拆文分析框</span>', 'success', 'success');
                 } else {
                     outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
                 outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
@@ -1478,7 +1512,7 @@ ${requirements}
             outputArea.textContent = '正在生成创意建议...';
 
             // 添加角色日志
-            addRoleLog('chief_editor', '开始生成创意建议', 'pending', 'pending');
+            addRoleLog('researcher', '开始生成创意建议', 'pending', 'pending');
 
             const prompt = `基于以下调研结果，提出创新性的创意建议：
 
@@ -1504,23 +1538,23 @@ ${analysis}
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'chief_editor'})
+                    body: JSON.stringify({prompt, role: 'researcher'})
                 });
 
-                addRoleLog('chief_editor', '正在调用总编辑角色...', 'info', 'pending');
+                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('creative-suggestions').value = result.content;
                     outputArea.textContent = '✅ 创意建议已生成并填入';
-                    addRoleLog('chief_editor', '✅ 创意建议生成完成<br><span class="response">内容已填入创意建议框</span>', 'success', 'success');
+                    addRoleLog('researcher', '✅ 创意建议生成完成<br><span class="response">内容已填入创意建议框</span>', 'success', 'success');
                 } else {
                     outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
                 outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
