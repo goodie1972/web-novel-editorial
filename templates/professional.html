@@ -2538,6 +2538,8 @@ ${feedback}
             const origText = btn.textContent;
             btn.textContent = '⏳ 生成中...';
             btn.disabled = true;
+            // 添加角色日志
+            addRoleLog('chief_editor', '开始AI生成核心需求', 'pending', 'pending');
             try {
                 const prompt = `你是专业网文策划编辑。根据以下信息，生成一段简洁的核心需求描述，供作者参考。
 
@@ -2561,15 +2563,19 @@ ${synopsis ? '故事梗概：' + synopsis : ''}
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({prompt, role: 'chief_editor'})
                 });
+                addRoleLog('chief_editor', '正在调用总编辑角色...', 'info', 'pending');
                 const data = await resp.json();
                 console.log('AI返回:', data);
                 if (data.success && data.content) {
                     document.getElementById('requirements').value = data.content;
+                    addRoleLog('chief_editor', '✅ 核心需求生成完成<br><span class="response">内容已填入核心需求框</span>', 'success', 'success');
                 } else {
                     alert('生成失败：' + (data.error || '未知错误'));
+                    addRoleLog('chief_editor', '❌ 生成失败: ' + (data.error || '未知错误'), 'error', 'error');
                 }
             } catch(e) {
                 alert('生成失败：' + e.message);
+                addRoleLog('chief_editor', '❌ 请求失败: ' + e.message, 'error', 'error');
             } finally {
                 btn.textContent = origText;
                 btn.disabled = false;
