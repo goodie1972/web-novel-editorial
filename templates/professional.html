@@ -1373,7 +1373,6 @@
         }
 
         async function generateMarketAnalysis() {
-            alert('generateMarketAnalysis 开始执行'); // 调试
             const genre = document.getElementById('genre').value;
             const requirements = document.getElementById('requirements').value;
             const outputArea = document.getElementById('stage2-output');
@@ -2683,6 +2682,7 @@ ${synopsis ? '故事梗概：' + synopsis : ''}
 
         // 添加角色日志
         function addRoleLog(roleId, message, type = 'info', status = 'success') {
+            debugger; // 调试断点
             const contentDiv = document.getElementById(`role-log-content-${roleId}`);
             if (!contentDiv) return;
 
