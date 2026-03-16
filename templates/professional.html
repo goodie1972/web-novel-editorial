@@ -2659,10 +2659,33 @@ ${synopsis ? '故事梗概：' + synopsis : ''}
             { id: 'writer',       name: '写手',   emoji: '📝', color: '#67c23a', desc: '负责章节创作与续写' }
         ];
 
+        // 讨论议题定义
+        const DISCUSSION_TOPICS = [
+            { id: 'world', title: '世界观', desc: '时代背景、地理环境、势力分布' },
+            { id: 'factions', title: '势力设定', desc: '各势力实力、关系、领地' },
+            { id: 'skills', title: '技能体系', desc: '主角技能、进化路线' },
+            { id: 'levels', title: '等级体系', desc: '实力等级、货币资源体系' },
+            { id: 'protagonist', title: '主角设定', desc: '姓名、性格、金手指、目标' },
+            { id: 'supporting', title: '主要配角', desc: '正派、反派、邪派、中立等配角设定' },
+            { id: 'mainplot', title: '主线剧情', desc: '主线+支线+情感线' },
+            { id: 'dungeons', title: '副本设定', desc: '多个副本的升级、危机、收获设计' },
+            { id: 'foreshadowing', title: '伏笔和钩子', desc: '伏笔列表、埋入章节、回收章节' },
+            { id: 'climax', title: '高潮和结局', desc: '全书高潮章节安排与结局设计' }
+        ];
+
         let roleConfigs = {};  // { chief_editor: {provider, model}, ... }
         let currentRole = 'chief_editor';
 
         let roleMonitorLogs = {}; // { chief_editor: [], editor: [], ... }
+
+        // Stage 3 讨论状态
+        let stage3Discussion = {
+            inProgress: false,
+            currentTopicIndex: 0,
+            currentSpeakerIndex: 0,  // 0=chief_editor, 1=editor, 2=researcher, 3=writer
+           发言次数: 0,
+            discussionHistory: []  // { topicId, roleId, name, roleEmoji, content, timestamp }
+        };
 
         // 初始化角色监控面板（卡片已硬编码在HTML中）
         function initRoleMonitor() {
