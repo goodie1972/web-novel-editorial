@@ -1725,26 +1725,29 @@ ${analysis}
             addDiscussionLog('system', '会议结束', 'system', '🎉 所有议题已讨论完成！', 'success');
         }
 
-        async function generateStage3Speech(topic, role) {
-            // 生成发言内容
-            const prompt = `你正在参与项目讨论会，议题是：${topic.title}
+        // Stage 3: 生成议题总结
+        async function generateStage3Summary(topic) {
+            const prompt = `你正在主持项目讨论会，刚刚完成了关于【${topic.title}】的讨论。
 
-${topic.desc}
+议题描述：${topic.desc}
 
-请基于以下项目背景，发表你的观点。发言内容中，大部分应基于已有信息，可以有不超过30%的新创意。
+请对讨论内容进行总结，提炼出关键观点和最终确认的要点。总结要简洁明了，150字以内。`;
 
-项目背景：
-- 市场分析：请参考 Stage 2 的市场调研
-- 榜单调研：请参考 Stage 2 的榜单分析
-- 拆文分析：请参考 Stage 2 的作品拆解
-- 创意建议：请参考 Stage 2 的创意建议
-
-作为${role.name}，请发表你的看法，包括：
-1. 你对该议题的看法
-2. 相关的见解和建议
-3. 可能的优化方向
-
-发言要简洁明了，200字以内。`;
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'chief_editor'})
+                });
+                const result = await response.json();
+                if (result.success && result.content) {
+                    return result.content;
+                }
+            } catch (error) {
+                console.error('生成总结失败:', error);
+            }
+            return '（总结内容生成失败，请检查API配置）';
+        }
 
         async function completeStage4() {
             const outline = document.getElementById('outline-doc').value;
@@ -2793,6 +2796,7 @@ ${synopsis ? '故事梗概：' + synopsis : ''}
             onChannelChange();
             onPlatformChange();
             initRoleMonitor();  // 初始化角色监控面板
+            renderTopicListPreview();  // 渲染 Stage 3 议题列表预览
         });
 
         // 角色定义
@@ -2892,6 +2896,22 @@ ${topic.desc}
 3. 可能的优化方向
 
 发言要简洁明了，200字以内。`;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: role.id})
+                });
+                const result = await response.json();
+                if (result.success && result.content) {
+                    return result.content;
+                }
+            } catch (error) {
+                console.error('生成发言失败:', error);
+            }
+            return '（发言内容生成失败，请检查API配置）';
+        }
 
         // 添加角色日志
         function addRoleLog(roleId, message, type = 'info', status = 'success') {
