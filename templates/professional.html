@@ -1548,16 +1548,203 @@ ${analysis}
             }
         }
 
-        async function completeStage3() {
-            if (completedElements < 12) {
-                alert('请完成所有12个核心要素');
+        // Stage 3: 项目讨论会逻辑
+
+        function renderTopicListPreview() {
+            const container = document.getElementById('topic-list-preview');
+            if (!container) return;
+            container.innerHTML = DISCUSSION_TOPICS.map((topic, index) =>
+                `<div style="padding: 8px; background: #f5f5f5; border-radius: 4px;">
+                    <div style="font-weight: 500;">${index + 1}. ${topic.title}</div>
+                    <div style="color: #666; font-size: 12px;">${topic.desc}</div>
+                </div>`
+            ).join('');
+        }
+
+        async function startStage3Meeting() {
+            if (!memoryClient) {
+                alert('请先创建项目');
                 return;
             }
 
-            document.querySelector('.stage-item[data-stage="3"]').classList.add('completed');
-            alert('✅ 阶段三完成！进入阶段四：基础设定');
-            showStage(4);
+            stage3Discussion = {
+                inProgress: true,
+                currentTopicIndex: 0,
+                currentSpeakerIndex: 0,
+                发言次数: 0,
+                discussionHistory: []
+            };
+
+            document.getElementById('meeting-not-started').style.display = 'none';
+            document.getElementById('meeting-in-progress').style.display = 'block';
+            document.getElementById('meeting-ended').style.display = 'none';
+
+            // 显示当前议题信息
+            const currentTopic = DISCUSSION_TOPICS[0];
+            document.getElementById('current-topic-num').textContent = '1';
+            document.getElementById('current-topic-title').textContent = currentTopic.title;
+            document.getElementById('current-topic-desc').textContent = currentTopic.desc;
+            document.getElementById('current-speaker-name').textContent = '总编辑';
+            document.getElementById('发言-count').textContent = '1';
+
+            // 记录讨论开始
+            addDiscussionLog('system', '会议开始', 'system', '会议开始，准备阅读项目背景...', 'info');
+
+            // 显示项目背景
+            try {
+                const plotDocs = await memoryClient.queryDocuments('plot');
+                let backgroundText = '<strong>📄 项目背景：</strong><br><br>';
+                if (plotDocs && plotDocs.length > 0) {
+                    plotDocs.forEach(doc => {
+                        backgroundText += `<strong>${doc.title}：</strong><br>${doc.content.substring(0, 200)}...<br><br>`;
+                    });
+                } else {
+                    backgroundText += '暂无项目背景信息，请先完成_stage2的调研内容。<br><br>';
+                }
+                addDiscussionLog('system', '项目背景', 'system', backgroundText, 'background');
+            } catch (error) {
+                console.error('读取项目背景失败:', error);
+                addDiscussionLog('system', '项目背景', 'system', '<strong>⚠️ 读取项目背景失败：</strong>' + error.message, 'error');
+            }
+
+            // 自动进入第一轮发言
+            setTimeout(() => {
+                startStage3NextSpeaker();
+            }, 1000);
         }
+
+        async function startStage3NextSpeaker() {
+            if (!stage3Discussion.inProgress) return;
+
+            const topic = DISCUSSION_TOPICS[stage3Discussion.currentTopicIndex];
+            const roleIndex = stage3Discussion.currentSpeakerIndex % 4;
+            const role = ROLES[roleIndex];
+
+            // 更新发言信息
+            stage3Discussion.发言次数++;
+            stage3Discussion.currentSpeakerIndex++;
+            document.getElementById('current-topic-num').textContent = stage3Discussion.currentTopicIndex + 1;
+            document.getElementById('current-topic-title').textContent = topic.title;
+            document.getElementById('current-speaker-name').textContent = role.name;
+            document.getElementById('发言-count').textContent = stage3Discussion.发言次数;
+
+            // 记录发言开始
+            addDiscussionLog('system', role.name + '准备发言', 'system', `正在阅读议题：<strong>${topic.title}</strong><br>${topic.desc}`, 'info');
+
+            // 生成发言内容
+            const发言内容 = await generateStage3Speech(topic, role);
+            if (发言内容) {
+                addDiscussionLog(role.id, role.name, role.emoji, 发言内容, 'speech');
+                stage3Discussion.discussionHistory.push({
+                    topicId: topic.id,
+                    topicTitle: topic.title,
+                    roleId: role.id,
+                    roleName: role.name,
+                    roleEmoji: role.emoji,
+                    content: 发言内容,
+                    timestamp: new Date().toISOString()
+                });
+
+                // 保存发言到记忆库
+                try {
+                    await memoryClient.addDocument('discussions', `${topic.title}-${role.name}发言`, 发言内容, {
+                        topicId: topic.id,
+                        topicTitle: topic.title,
+                        roleId: role.id,
+                        timestamp: new Date().toISOString()
+                    });
+                } catch (error) {
+                    console.error('保存发言失败:', error);
+                }
+            }
+
+            // 检查是否需要结束议题
+            if (stage3Discussion.发言次数 >= 10) {
+                // 触发总编辑总结
+                setTimeout(() => finishStage3Topic(), 500);
+            } else {
+                // 自动进入下一位发言者
+                setTimeout(() => {
+                    startStage3NextSpeaker();
+                }, 1500);
+            }
+        }
+
+        async function finishStage3Topic() {
+            if (!stage3Discussion.inProgress) return;
+
+            const topic = DISCUSSION_TOPICS[stage3Discussion.currentTopicIndex];
+
+            // 总编辑总结
+            addDiscussionLog('system', '总编辑总结', 'system', `正在对议题 <strong>${topic.title}</strong> 进行总结...`, 'info');
+
+            const summary = await generateStage3Summary(topic);
+            if (summary) {
+                addDiscussionLog('chief_editor', '总编辑', '👑', summary, 'summary');
+
+                // 保存确认结果
+                try {
+                    await memoryClient.addDocument('confirmed', `${topic.title}确认`, summary, {
+                        topicId: topic.id,
+                        topicTitle: topic.title,
+                        confirmed: true,
+                        timestamp: new Date().toISOString()
+                    });
+                } catch (error) {
+                    console.error('保存确认结果失败:', error);
+                }
+            }
+
+            // 下一个议题
+            stage3Discussion.currentTopicIndex++;
+            stage3Discussion.发言次数 = 0;
+            stage3Discussion.currentSpeakerIndex = 0;
+
+            if (stage3Discussion.currentTopicIndex >= DISCUSSION_TOPICS.length) {
+                // 所有议题完成
+                finishStage3Meeting();
+            } else {
+                // 显示下一个议题
+                const nextTopic = DISCUSSION_TOPICS[stage3Discussion.currentTopicIndex];
+                setTimeout(() => {
+                    document.getElementById('current-topic-num').textContent = stage3Discussion.currentTopicIndex + 1;
+                    document.getElementById('current-topic-title').textContent = nextTopic.title;
+                    document.getElementById('current-topic-desc').textContent = nextTopic.desc;
+                    stage3Discussion.currentSpeakerIndex = 0;
+                    stage3Discussion.发言次数 = 0;
+                    addDiscussionLog('system', '新议题开始', 'system', `议题 ${stage3Discussion.currentTopicIndex + 1}: <strong>${nextTopic.title}</strong> 开始讨论`, 'info');
+                    startStage3NextSpeaker();
+                }, 1000);
+            }
+        }
+
+        function finishStage3Meeting() {
+            stage3Discussion.inProgress = false;
+            document.getElementById('meeting-in-progress').style.display = 'none';
+            document.getElementById('meeting-ended').style.display = 'block';
+            addDiscussionLog('system', '会议结束', 'system', '🎉 所有议题已讨论完成！', 'success');
+        }
+
+        async function generateStage3Speech(topic, role) {
+            // 生成发言内容
+            const prompt = `你正在参与项目讨论会，议题是：${topic.title}
+
+${topic.desc}
+
+请基于以下项目背景，发表你的观点。发言内容中，大部分应基于已有信息，可以有不超过30%的新创意。
+
+项目背景：
+- 市场分析：请参考 Stage 2 的市场调研
+- 榜单调研：请参考 Stage 2 的榜单分析
+- 拆文分析：请参考 Stage 2 的作品拆解
+- 创意建议：请参考 Stage 2 的创意建议
+
+作为${role.name}，请发表你的看法，包括：
+1. 你对该议题的看法
+2. 相关的见解和建议
+3. 可能的优化方向
+
+发言要简洁明了，200字以内。`;
 
         async function completeStage4() {
             const outline = document.getElementById('outline-doc').value;
@@ -2685,20 +2872,26 @@ ${synopsis ? '故事梗概：' + synopsis : ''}
             });
         }
 
-        // 切换角色监控面板显示/隐藏
-        function toggleRoleMonitor() {
-            const panel = document.getElementById('role-monitor-panel');
-            const main = document.querySelector('.main');
-            if (panel) {
-                panel.classList.toggle('collapsed');
-                // 当面板折叠时，移除 main 的 margin-right
-                if (panel.classList.contains('collapsed')) {
-                    main.classList.add('no-monitor');
-                } else {
-                    main.classList.remove('no-monitor');
-                }
-            }
-        }
+        // Stage 3: 生成角色发言内容
+        async function generateStage3Speech(topic, role) {
+            const prompt = `你正在参与项目讨论会，议题是：${topic.title}
+
+${topic.desc}
+
+请基于以下项目背景，发表你的观点。发言内容中，大部分应基于已有信息，可以有不超过30%的新创意。
+
+项目背景：
+- 市场分析：请参考 Stage 2 的市场调研
+- 榜单调研：请参考 Stage 2 的榜单分析
+- 拆文分析：请参考 Stage 2 的作品拆解
+- 创意建议：请参考 Stage 2 的创意建议
+
+作为${role.name}，请发表你的看法，包括：
+1. 你对该议题的看法
+2. 相关的见解和建议
+3. 可能的优化方向
+
+发言要简洁明了，200字以内。`;
 
         // 添加角色日志
         function addRoleLog(roleId, message, type = 'info', status = 'success') {
@@ -2744,6 +2937,50 @@ ${synopsis ? '故事梗概：' + synopsis : ''}
                     logs[i].remove();
                 }
             }
+        }
+
+        // 添加讨论日志（Stage 3）
+        function addDiscussionLog(roleId, roleToName, roleEmoji, message, type = 'info') {
+            const logDiv = document.getElementById('stage3-discussion-log');
+            if (!logDiv) return;
+
+            const time = new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            let statusBadge = '';
+            if (type === 'success') {
+                statusBadge = '<span style="font-size:10px;background:#e8f5e9;color:#67c23a;padding:2px 6px;border-radius:4px;">✓</span>';
+            } else if (type === 'error') {
+                statusBadge = '<span style="font-size:10px;background:#ffebee;color:#f56c6c;padding:2px 6px;border-radius:4px;">✗</span>';
+            } else if (type === 'info') {
+                statusBadge = '<span style="font-size:10px;background:#fff3e0;color:#faad14;padding:2px 6px;border-radius:4px;">ℹ</span>';
+            } else if (type === 'background') {
+                statusBadge = '<span style="font-size:10px;background:#f0f7ff;color:#4a90d9;padding:2px 6px;border-radius:4px;">📖</span>';
+            } else if (type === 'speech') {
+                statusBadge = '<span style="font-size:10px;background:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;">发言</span>';
+            } else if (type === 'summary') {
+                statusBadge = '<span style="font-size:10px;background:#f5a62320;color:#f5a623;padding:2px 6px;border-radius:4px;">总结</span>';
+            }
+
+            const roleInfo = type === 'system' ? '<strong>系统</strong>' :
+                            '<div style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px;">' +
+                                (roleEmoji ? '<span style="font-size:16px;">' + roleEmoji + '</span>' : '') +
+                                '<span style="font-weight:500;color:' + (roleId === 'chief_editor' ? '#f5a623' : roleId === 'editor' ? '#4a90d9' : roleId === 'researcher' ? '#7b68ee' : '#67c23a') + '">' + roleToName + '</span>' +
+                            '</div>';
+
+            const logItem = document.createElement('div');
+            logItem.className = 'role-log-item';
+            logItem.style.padding = '12px 16px';
+            logItem.style.background = type === 'background' ? '#f0f7ff' : type === 'info' ? '#fff3e0' : 'white';
+            logItem.style.borderRadius = '8px';
+            logItem.style.marginBottom = '12px';
+            logItem.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                roleInfo +
+                '<span style="font-size:11px;color:#999;">' + time + '</span>' +
+                '</div>' +
+                '<div style="line-height:1.6;font-size:14px;">' + message + '</div>' +
+                (statusBadge ? '<div style="margin-top:6px;">' + statusBadge + '</div>' : '');
+
+            logDiv.appendChild(logItem);
+            logDiv.scrollTop = logDiv.scrollHeight;
         }
 
         // 更新角色LLM显示
