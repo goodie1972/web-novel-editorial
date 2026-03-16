@@ -518,107 +518,64 @@
                 </div>
             </div>
 
-            <!-- Stage 3: 团队讨论 -->
+            <!-- Stage 3: 项目讨论会 -->
             <div id="stage-3" class="stage-content" style="display:none;">
                 <div class="card">
-                    <h2>阶段三：团队讨论 - 确定12核心要素</h2>
+                    <h2>阶段三：项目讨论会 - 确认项目核心设定</h2>
                     <div class="info-box">
-                        <strong>关键：</strong>所有核心要素必须写入记忆库，后续创作将基于这些设定
+                        <strong>规则：</strong>总编辑主持会议，4位角色依次发言，总编辑总结确认。每个议题不超过10次发言。
                     </div>
 
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="elements-progress" style="width: 0%"></div>
-                    </div>
-                    <p style="text-align: center; margin-bottom: 16px;">已完成: <strong><span id="elements-count">0</span>/12</strong></p>
-
-                    <div class="element-grid">
-                        <div class="element-card">
-                            <h4>1. 世界观设定</h4>
-                            <textarea id="element-world" placeholder="时代背景、地理环境、势力分布"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('world', '世界观设定')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-world">未完成</span>
+                    <!-- 会议控制区 -->
+                    <div id="stage3-control-panel" style="margin-bottom: 24px; padding: 16px; background: #f0f7ff; border-radius: 8px;">
+                        <div id="meeting-not-started" style="text-align: center;">
+                            <h3 style="margin-bottom: 16px;">准备开始项目讨论会</h3>
+                            <p style="margin-bottom: 16px; color: #666;">会议将按以下议题顺序进行讨论，每个议题所有角色依次发言，最后由总编辑确认。</p>
+                            <div style="margin-bottom: 16px; background: white; padding: 16px; border-radius: 6px;">
+                                <h4 style="margin-bottom: 12px; color: #333;">讨论议题列表：</h4>
+                                <div id="topic-list-preview" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 13px;">
+                                    <!-- 动态生成议题列表 -->
+                                </div>
+                            </div>
+                            <button class="btn btn-success" onclick="startStage3Meeting()">✨ 开始项目讨论会</button>
                         </div>
 
-                        <div class="element-card">
-                            <h4>2. 主角设定</h4>
-                            <textarea id="element-protagonist" placeholder="姓名、性格、金手指、目标"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('protagonist', '主角设定')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-protagonist">未完成</span>
+                        <div id="meeting-in-progress" style="display: none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0;">
+                                <div>
+                                    <h3 style="margin-bottom: 4px; color: #333;">议题 <span id="current-topic-num">1</span>/10：<span id="current-topic-title" style="color: #f5a623;"></span></h3>
+                                    <p style="margin: 0; font-size: 13px; color: #666;" id="current-topic-desc"></p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; margin-bottom: 4px;">发言进度： <span id="发言-count">1</span>/10</div>
+                                    <div style="font-size: 12px; color: #666;">
+                                        当前发言： <span id="current-speaker-name" style="font-weight: bold;"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn" onclick="startStage3NextSpeaker()"> nextStateSpeaker</button>
+                                <button class="btn" onclick="finishStage3Topic()">跳过本轮</button>
+                            </div>
                         </div>
 
-                        <div class="element-card">
-                            <h4>3. 等级体系</h4>
-                            <textarea id="element-levels" placeholder="实力等级、货币资源体系"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('levels', '等级体系')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-levels">未完成</span>
-                        </div>
-
-                        <div class="element-card">
-                            <h4>4. 技能体系</h4>
-                            <textarea id="element-skills" placeholder="主角技能、进化路线"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('skills', '技能体系')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-skills">未完成</span>
-                        </div>
-
-                        <div class="element-card">
-                            <h4>5. 配角设定</h4>
-                            <textarea id="element-supporting" placeholder="主要配角、出场章节"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('supporting', '配角设定')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-supporting">未完成</span>
-                        </div>
-
-                        <div class="element-card">
-                            <h4>6. 势力设定</h4>
-                            <textarea id="element-factions" placeholder="各势力实力、关系、领地"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('factions', '势力设定')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-factions">未完成</span>
-                        </div>
-
-                        <div class="element-card">
-                            <h4>7. 主线剧情</h4>
-                            <textarea id="element-mainplot" placeholder="主线+支线+情感线"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('mainplot', '主线剧情')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-mainplot">未完成</span>
-                        </div>
-
-                        <div class="element-card">
-                            <h4>8. 副本设计</h4>
-                            <textarea id="element-dungeons" placeholder="升级副本、危机副本、收获副本"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('dungeons', '副本设计')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-dungeons">未完成</span>
-                        </div>
-
-                        <div class="element-card">
-                            <h4>9. 伏笔体系</h4>
-                            <textarea id="element-foreshadowing" placeholder="伏笔列表、埋入章节、回收章节"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('foreshadowing', '伏笔体系')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-foreshadowing">未完成</span>
-                        </div>
-
-                        <div class="element-card">
-                            <h4>10. 钩子体系</h4>
-                            <textarea id="element-hooks" placeholder="章节钩子、卷钩子、全书钩子"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('hooks', '钩子体系')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-hooks">未完成</span>
-                        </div>
-
-                        <div class="element-card">
-                            <h4>11. 章节细纲</h4>
-                            <textarea id="element-outline" placeholder="前5章详细规划"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('outline', '章节细纲')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-outline">未完成</span>
-                        </div>
-
-                        <div class="element-card">
-                            <h4>12. 高潮安排</h4>
-                            <textarea id="element-climax" placeholder="全书高潮章节安排"></textarea>
-                            <button class="btn" style="margin-top: 8px; width: 100%;" onclick="saveElement('climax', '高潮安排')">写入记忆库</button>
-                            <span class="status-badge status-pending" id="status-climax">未完成</span>
+                        <div id="meeting-ended" style="display: none; text-align: center;">
+                            <h3 style="color: #67c23a;">🎉 项目讨论会已结束！</h3>
+                            <p style="margin: 16px 0;">所有10个议题已完成讨论，确认结果已保存到记忆库。</p>
+                            <button class="btn btn-success" onclick="completeStage3()">进入阶段四：基础设定定稿</button>
                         </div>
                     </div>
 
-                    <div style="margin-top: 24px; text-align: center;">
-                        <button class="btn btn-success" id="complete-stage3-btn" onclick="completeStage3()" disabled>完成团队讨论，进入基础设定</button>
+                    <!-- 讨论记录区 -->
+                    <div class="card" style="margin-bottom: 0; border-top: none; border-radius: 0 0 8px 8px;">
+                        <div style="padding: 12px 16px; background: #f0f0f0; border-radius: 8px 8px 0 0; font-weight: 500;">
+                            讨论记录
+                        </div>
+                        <div style="height: 400px; overflow-y: auto; padding: 16px;" id="stage3-discussion-log">
+                            <div style="text-align: center; color: #999; padding: 40px 0;">
+                                讨论记录将在此处显示...
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
