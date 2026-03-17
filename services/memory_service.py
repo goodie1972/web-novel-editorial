@@ -6,9 +6,9 @@ from typing import Dict, List, Optional
 
 
 class MemoryManager:
-    """Simple JSON-based memory system for 7 collections"""
+    """Simple JSON-based memory system for web novel editorial"""
 
-    COLLECTIONS = ["world", "characters", "skills", "chapters", "foreshadowing", "plot", "reviews"]
+    COLLECTIONS = ["world", "characters", "skills", "chapters", "foreshadowing", "plot", "reviews", "discussions", "confirmed"]
 
     def __init__(self, project_path: Path):
         self.memory_path = Path(project_path) / "memory"
