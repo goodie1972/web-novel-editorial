@@ -904,6 +904,8 @@
                 <div class="settings-nav-item" data-tab="works" onclick="switchSettingsTab('works')">📚 我的作品</div>
                 <div class="settings-nav-item" data-tab="model" onclick="switchSettingsTab('model')">🤖 模型设置</div>
                 <div class="settings-nav-item" data-tab="roleconfig" onclick="switchSettingsTab('roleconfig')">👥 角色模型</div>
+                <div class="settings-nav-item" data-tab="projects" onclick="switchSettingsTab('projects')">📁 项目管理</div>
+                <div class="settings-nav-item" data-tab="memory" onclick="switchSettingsTab('memory')">💾 记忆库管理</div>
                 <div class="settings-nav-item" data-tab="about" onclick="switchSettingsTab('about')">ℹ️ 关于</div>
             </div>
             <!-- 中间：供应商列表 -->
@@ -1177,6 +1179,41 @@
                     <div class="settings-detail-body">
                         <div id="role-config-content">
                             <!-- 角色配置面板动态渲染 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 项目管理页面 -->
+                <div class="settings-section" id="settings-projects" style="display:none">
+                    <div class="settings-detail-header">
+                        <div class="settings-detail-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:white;font-size:20px">📁</div>
+                        <div>
+                            <div class="settings-detail-title">项目管理</div>
+                            <div style="font-size:12px;color:#999;margin-top:2px">管理所有本地项目</div>
+                        </div>
+                    </div>
+                    <div class="settings-detail-body">
+                        <div style="margin-bottom:16px">
+                            <button class="btn btn-success" onclick="refreshProjectList()">🔄 刷新列表</button>
+                        </div>
+                        <div id="projects-list" style="display:flex;flex-direction:column;gap:10px">
+                            <div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">加载中...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 记忆库管理页面 -->
+                <div class="settings-section" id="settings-memory" style="display:none">
+                    <div class="settings-detail-header">
+                        <div class="settings-detail-icon" style="background:linear-gradient(135deg,#fa709a,#fee140);color:white;font-size:20px">💾</div>
+                        <div>
+                            <div class="settings-detail-title">记忆库管理</div>
+                            <div style="font-size:12px;color:#999;margin-top:2px" id="memory-current-project">当前项目: 无</div>
+                        </div>
+                    </div>
+                    <div class="settings-detail-body">
+                        <div id="memory-collections-list">
+                            <div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">请先打开一个项目</div>
                         </div>
                     </div>
                 </div>
@@ -2364,6 +2401,8 @@ ${feedback}
 
             if (tab === 'roleconfig') initRoleConfig();
             if (tab === 'works') loadWorksList();
+            if (tab === 'projects') loadProjectList();
+            if (tab === 'memory') loadMemoryCollections();
         }
 
         function openUserTab(tab) {
@@ -2409,9 +2448,237 @@ ${feedback}
                 </div>`).join('');
         }
 
-        function loadProjectFromSettings(idx) {
+        // ========== 项目管理功能 ==========
+        async function loadProjectList() {
+            const list = document.getElementById('projects-list');
+            if (!list) return;
+            list.innerHTML = '<div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">加载中...</div>';
+
+            try {
+                const response = await fetch('/api/projects');
+                const result = await response.json();
+                if (result.success && result.projects) {
+                    if (result.projects.length === 0) {
+                        list.innerHTML = '<div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">暂无项目，开始创建项目吧</div>';
+                    } else {
+                        list.innerHTML = result.projects.map(p => `
+                            <div style="border:1px solid #e8e8e8;border-radius:8px;padding:14px 16px;background:#fafafa">
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <div style="flex:1">
+                                        <div style="font-weight:600;font-size:14px;color:#222">🌟 ${p.name}</div>
+                                        <div style="display:flex;gap:10px;margin-top:4px;font-size:12px;color:#999">
+                                            <span>ID: ${p.id.substring(0,8)}...</span>
+                                            <span>${p.mode}</span>
+                                            <span>阶段${p.current_stage}</span>
+                                            <span>创建: ${p.created_at? p.created_at.split('T')[0]: '未知'}</span>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex;gap:8px">
+                                        <button class="btn btn-success" style="font-size:11px" onclick="openProjectFromManagement('${p.id}')">进入</button>
+                                        <button class="btn" style="font-size:11px" onclick="backupProject('${p.id}', '${p.name.replace(/'/g, "\\'")}')">备份</button>
+                                        <button class="btn" style="font-size:11px" onclick="renameProjectPrompt('${p.id}')">重命名</button>
+                                        <button class="btn" style="font-size:11px;background:#ffebee;color:#e53935;border-color:#ffcdd2" onclick="deleteProjectPrompt('${p.id}', '${p.name.replace(/'/g, "\\'")}')">删除</button>
+                                    </div>
+                                </div>
+                            </div>`).join('');
+                    }
+                } else {
+                    list.innerHTML = `<div style="text-align:center;color:#f56c6c;padding:20px;font-size:14px">加载失败: ${result.error || '未知错误'}</div>`;
+                }
+            } catch (error) {
+                list.innerHTML = `<div style="text-align:center;color:#f56c6c;padding:20px;font-size:14px">请求失败: ${error.message}</div>`;
+            }
+        }
+
+        function refreshProjectList() {
+            loadProjectList();
+        }
+
+        async function openProjectFromManagement(projectId) {
             closeSettings();
-            // 触发加载项目逻辑（如已有）
+            // 重新加载页面到指定项目
+            window.location.href = window.location.pathname + '?project=' + projectId;
+        }
+
+        async function backupProject(projectId, projectName) {
+            try {
+                const response = await fetch(`/api/projects/${projectId}/backup`, { method: 'POST' });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${projectName}_${projectId.substring(0,8)}.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    alert('✅ 备份完成！');
+                } else {
+                    const result = await response.json();
+                    alert(`❌ 备份失败: ${result.error || '未知错误'}`);
+                }
+            } catch (error) {
+                alert(`❌ 备份失败: ${error.message}`);
+            }
+        }
+
+        function renameProjectPrompt(projectId) {
+            const currentName = prompt('请输入新项目名称：');
+            if (currentName && currentName.trim()) {
+                fetch(`/api/projects/${projectId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: currentName.trim()})
+                }).then(r => r.json()).then(result => {
+                    if (result.success) {
+                        alert('✅ 重命名成功！');
+                        loadProjectList();
+                    } else {
+                        alert(`❌ 重命名失败: ${result.error || '未知错误'}`);
+                    }
+                }).catch(error => alert(`❌ 请求失败: ${error.message}`));
+            }
+        }
+
+        function deleteProjectPrompt(projectId, projectName) {
+            if (confirm(`确定要删除项目 "${projectName}" 吗？此操作不可撤销！`)) {
+                fetch(`/api/projects/${projectId}`, { method: 'DELETE' })
+                    .then(r => r.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert('✅ 项目已删除');
+                            loadProjectList();
+                        } else {
+                            alert(`❌ 删除失败: ${result.error || '未知错误'}`);
+                        }
+                    })
+                    .catch(error => alert(`❌ 请求失败: ${error.message}`));
+            }
+        }
+
+        // ========== 记忆库管理功能 ==========
+        let currentMemoryProjectId = null;
+
+        async function loadMemoryCollections() {
+            const list = document.getElementById('memory-collections-list');
+            const projectTitle = document.getElementById('memory-current-project');
+            if (!list) return;
+
+            if (!memoryClient) {
+                list.innerHTML = '<div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">请先打开一个项目</div>';
+                if (projectTitle) projectTitle.textContent = '当前项目: 无';
+                return;
+            }
+
+            currentMemoryProjectId = memoryClient.projectId;
+            if (projectTitle) projectTitle.textContent = '当前项目: ' + (document.getElementById('nav-project-name')?.textContent || '未知项目');
+
+            try {
+                // 获取各集合的文档数量
+                const collections = ['world', 'characters', 'skills', 'chapters', 'foreshadowing', 'plot', 'reviews', 'discussions', 'confirmed'];
+                const collectionInfo = [];
+
+                for (const coll of collections) {
+                    try {
+                        const response = await fetch(`/api/memory/${memoryClient.projectId}/${coll}`);
+                        const result = await response.json();
+                        if (result.success) {
+                            collectionInfo.push({
+                                name: coll,
+                                label: getCollectionLabel(coll),
+                                count: result.documents.length
+                            });
+                        }
+                    } catch (e) {
+                        console.error(`加载 ${coll} 失败:`, e);
+                    }
+                }
+
+                list.innerHTML = collectionInfo.map(c => `
+                    <div style="border:1px solid #e8e8e8;border-radius:8px;padding:14px 16px;background:#fafafa;margin-bottom:10px">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <div>
+                                <div style="font-weight:600;font-size:14px;color:#222">${c.label} <span style="font-size:11px;background:#e1e8ef;color:#666;padding:2px 6px;border-radius:4px;margin-left:8px">${c.count} 条记录</span></div>
+                                <div style="font-size:12px;color:#999;margin-top:3px">${c.name}.json</div>
+                            </div>
+                            <div style="display:flex;gap:8px">
+                                <button class="btn" style="font-size:11px" onclick="exportCollection('${c.name}')">导出</button>
+                                <button class="btn" style="font-size:11px" onclick="importCollection('${c.name}')">导入</button>
+                                <button class="btn" style="font-size:11px;background:#fff0f0;color:#e53e3e;border-color:#fecdd3" onclick="clearCollection('${c.name}')">清空</button>
+                            </div>
+                        </div>
+                    </div>`).join('');
+            } catch (error) {
+                list.innerHTML = `<div style="text-align:center;color:#f56c6c;padding:20px;font-size:14px">加载失败: ${error.message}</div>`;
+            }
+        }
+
+        function getCollectionLabel(name) {
+            const labels = {
+                'world': '世界观',
+                'characters': '角色设定',
+                'skills': '技能体系',
+                'chapters': '章节列表',
+                'foreshadowing': '伏笔钩子',
+                'plot': '剧情大纲',
+                'reviews': '读者反馈',
+                'discussions': '讨论记录',
+                'confirmed': '确认内容'
+            };
+            return labels[name] || name;
+        }
+
+        function exportCollection(collectionName) {
+            if (!currentMemoryProjectId) return;
+            window.location.href = `/api/projects/${currentMemoryProjectId}/memory/${collectionName}`;
+        }
+
+        function importCollection(collectionName) {
+            if (!currentMemoryProjectId) return;
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch(`/api/projects/${currentMemoryProjectId}/memory/${collectionName}/import`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        alert(`✅ ${result.message}`);
+                        loadMemoryCollections();
+                    } else {
+                        alert(`❌ 导入失败: ${result.error || '未知错误'}`);
+                    }
+                } catch (error) {
+                    alert(`❌ 导入失败: ${error.message}`);
+                }
+            };
+            input.click();
+        }
+
+        function clearCollection(collectionName) {
+            if (!currentMemoryProjectId) return;
+            if (confirm(`确定要清空 "${getCollectionLabel(collectionName)}" 集合吗？此操作不可撤销！`)) {
+                fetch(`/api/projects/${currentMemoryProjectId}/memory/${collectionName}/clear`, {
+                    method: 'POST'
+                }).then(r => r.json()).then(result => {
+                    if (result.success) {
+                        alert(`✅ ${result.message}`);
+                        loadMemoryCollections();
+                    } else {
+                        alert(`❌ 清空失败: ${result.error || '未知错误'}`);
+                    }
+                }).catch(error => alert(`❌ 请求失败: ${error.message}`));
+            }
         }
 
         // ===== 角色管理系统 =====

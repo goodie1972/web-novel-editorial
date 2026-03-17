@@ -134,7 +134,9 @@ ai-web-novel-editorial/
 ### 后端
 - Flask - Web框架
 - Flask-CORS - 跨域支持
-- OpenAI SDK - AI接口
+- OpenAI SDK - OpenAI兼容接口
+- Anthropic SDK - Claude官方SDK
+- python-dotenv - 环境变量管理
 
 ### 前端
 - HTML5 - 页面结构
@@ -179,6 +181,21 @@ ai-web-novel-editorial/
 修改 `.env` 中的 `PORT` 变量，或使用 `python app.py --port 8080` 指定端口。
 
 ## 📊 更新日志
+
+### v6.2 (2025.3.4) 🎯
+- ✅ 实现真实 API 模型列表获取（不再硬编码）
+- ✅ 添加模型类型分类（文本、图像、语音、嵌入、视频）
+- ✅ 新增配置保存/加载功能
+- ✅ 优化模型选择界面，按类型分组显示
+
+### v6.1 (2025.3.4) 🔧
+- ✅ 修复 Claude API 集成（使用官方 Anthropic SDK）
+- ✅ 添加环境变量自动加载（python-dotenv）
+- ✅ 合并重复路由代码，提升代码质量
+- ✅ 增强安全配置（CORS白名单、文件路径验证）
+- ✅ 添加 API 超时和请求大小限制
+- ✅ 改进错误处理和日志记录
+- ✅ 独立数据目录管理
 
 ### v6.0 (2025.3.1) 🎉
 - ✅ 项目重新命名：ai-web-novel-editorial

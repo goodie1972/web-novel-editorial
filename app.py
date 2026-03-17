@@ -1145,6 +1145,162 @@ def get_handover(project_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+# ==================== Project Management API ====================
+
+@app.route("/api/projects/<project_id>", methods=["DELETE"])
+def delete_project(project_id):
+    """Delete a project and all its data"""
+    try:
+        project_path = DATA_DIR / "projects" / project_id
+        if not project_path.exists():
+            return jsonify({"success": False, "error": "项目不存在"}), 404
+
+        import shutil
+        shutil.rmtree(project_path)
+        logger.info(f"Project {project_id} deleted")
+        return jsonify({"success": True, "message": "项目已删除"})
+    except Exception as e:
+        logger.error(f"Failed to delete project: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/projects/<project_id>/backup", methods=["POST"])
+def backup_project(project_id):
+    """Backup a project as ZIP file"""
+    try:
+        import zipfile
+        import io
+        from datetime import datetime
+
+        project_path = DATA_DIR / "projects" / project_id
+        if not project_path.exists():
+            return jsonify({"success": False, "error": "项目不存在"}), 404
+
+        # Generate backup filename
+        project_data = project_manager.load_project(project_id)
+        project_name = project_data.get("name", "unknown")
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        backup_filename = f"{project_name}_{project_id[:8]}_{timestamp}.zip"
+
+        # Create ZIP in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for file_path in project_path.rglob('*'):
+                if file_path.is_file():
+                    arc_path = file_path.relative_to(project_path)
+                    zip_file.write(file_path, arcname=arc_path)
+
+        zip_buffer.seek(0)
+
+        # Return as response
+        response = Response(
+            zip_buffer.getvalue(),
+            mimetype='application/zip',
+            headers={
+                'Content-Disposition': f'attachment; filename="{backup_filename}"',
+                'Content-Length': len(zip_buffer.getvalue())
+            }
+        )
+        return response
+    except Exception as e:
+        logger.error(f"Failed to backup project: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ==================== Memory Collection API ====================
+
+@app.route("/api/projects/<project_id>/memory/<collection>", methods=["GET"])
+def export_memory_collection(project_id, collection):
+    """Export a memory collection as JSON"""
+    try:
+        project_path = DATA_DIR / "projects" / project_id
+        collection_file = project_path / "memory" / f"{collection}.json"
+
+        if not collection_file.exists():
+            return jsonify({"success": False, "error": "集合不存在"}), 404
+
+        with open(collection_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        # Return as downloadable JSON
+        response = Response(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            mimetype='application/json',
+            headers={
+                'Content-Disposition': f'attachment; filename="{collection}_{project_id[:8]}.json"',
+            }
+        )
+        return response
+    except Exception as e:
+        logger.error(f"Failed to export collection: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/projects/<project_id>/memory/<collection>/import", methods=["POST"])
+def import_memory_collection(project_id, collection):
+    """Import a memory collection from JSON"""
+    try:
+        if 'file' not in request.files:
+            data = request.json
+        else:
+            file = request.files['file']
+            data = json.load(file)
+
+        project_path = DATA_DIR / "projects" / project_id
+        collection_file = project_path / "memory" / f"{collection}.json"
+
+        # Validate data structure
+        if not isinstance(data, dict) or "documents" not in data:
+            return jsonify({"success": False, "error": "无效的JSON格式"}), 400
+
+        # Append to existing documents
+        with open(collection_file, 'r', encoding='utf-8') as f:
+            existing = json.load(f)
+
+        existing_documents = existing.get("documents", [])
+        new_documents = data.get("documents", [])
+
+        # Merge documents, avoiding duplicates by ID
+        existing_ids = {doc.get("id") for doc in existing_documents}
+        for doc in new_documents:
+            if doc.get("id") not in existing_ids:
+                existing_documents.append(doc)
+
+        existing["documents"] = existing_documents
+
+        with open(collection_file, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+
+        return jsonify({
+            "success": True,
+            "message": f"已导入 {len(new_documents)} 条记录"
+        })
+    except json.JSONDecodeError:
+        return jsonify({"success": False, "error": "无效的JSON格式"}), 400
+    except Exception as e:
+        logger.error(f"Failed to import collection: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/projects/<project_id>/memory/<collection>/clear", methods=["POST"])
+def clear_memory_collection(project_id, collection):
+    """Clear all documents from a memory collection"""
+    try:
+        project_path = DATA_DIR / "projects" / project_id
+        collection_file = project_path / "memory" / f"{collection}.json"
+
+        if not collection_file.exists():
+            return jsonify({"success": False, "error": "集合不存在"}), 404
+
+        with open(collection_file, 'w', encoding='utf-8') as f:
+            json.dump({"documents": []}, f, ensure_ascii=False, indent=2)
+
+        return jsonify({"success": True, "message": f"集合 {collection} 已清空"})
+    except Exception as e:
+        logger.error(f"Failed to clear collection: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 60001))
     debug = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
