@@ -158,19 +158,26 @@
         .btn-primary { background: #4a90d9; color: white; border: none; padding: 9px 18px; border-radius: 7px; cursor: pointer; font-size: 13px; }
         .btn-primary:hover { background: #357abd; }
         /* 模型列表 */
-        .model-list-result { margin-top: 12px; border: 1px solid #e8e8e8; border-radius: 8px; max-height: 340px; overflow-y: auto; background: #fafafa; }
+        .model-list-result { margin-top: 12px; border: 1px solid #e8e8e8; border-radius: 8px; max-height: 340px; overflow-y: auto; background: #fafafa; display: flex; flex-direction: column; }
+        .model-list-header { position: sticky; top: 0; background: #fafafa; z-index: 10; padding: 12px; border-bottom: 1px solid #e8e8e8; }
+        .model-list-content { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
         .model-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; transition: background 0.1s; }
         .model-item:last-child { border-bottom: none; }
         .model-item:hover { background: #f0f5ff; }
         .model-item.selected { background: #e8f0ff; }
         .model-item span { color: #333; }
         .model-item.selected span { color: #1a73e8; font-weight: 500; }
+        .model-search-box { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .model-search-box input { flex: 1; padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 13px; }
+        .model-search-box input:focus { outline: none; border-color: #4a90d9; }
+        .model-list-empty { padding: 20px; text-align: center; color: #999; font-size: 13px; }
         .save-config-bar { padding: 16px 0 0; border-top: 1px solid #eee; margin-top: auto; }
         .save-result-msg { margin-top: 8px; font-size: 13px; padding: 8px 12px; border-radius: 4px; display: none; }
         .save-result-msg.success { background: #e8f5e9; color: #2e7d32; display: block; }
         .save-result-msg.error { background: #ffebee; color: #c62828; display: block; }
         /* 保存结果弹窗样式 */
-        .settings-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .settings-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .settings-modal-overlay.open { display: flex; }
         .settings-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; text-align: center; animation: fadeIn 0.2s ease; }
         .selected-model-input { margin-top: 10px; }
         .selected-model-input label { font-size: 12px; color: #999; display: block; margin-bottom: 4px; }
@@ -232,13 +239,44 @@
 
         /* 角色下拉面板 */
         .char-dropdown-wrap { position: relative; }
-        .char-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-height: 500px; background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); overflow: hidden; z-index: 500; }
+        .char-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 480px; max-height: 600px; background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); overflow: hidden; z-index: 500; }
         .char-dropdown.open { display: flex; flex-direction: column; }
         .char-dropdown-header { padding: 14px 16px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; display: flex; justify-content: space-between; align-items: center; }
         .char-dropdown-title { font-size: 15px; font-weight: 600; }
+        .char-dropdown-tabs { display: flex; gap: 4px; background: rgba(255,255,255,0.15); padding: 4px; border-radius: 8px; }
+        .char-dropdown-tab { padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.2s; color: rgba(255,255,255,0.8); border: none; background: transparent; }
+        .char-dropdown-tab:hover { color: white; }
+        .char-dropdown-tab.active { background: white; color: #667eea; font-weight: 600; }
         .char-add-btn { background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
         .char-add-btn:hover { background: rgba(255,255,255,0.4); }
-        .char-dropdown-body { flex: 1; overflow-y: auto; padding: 8px; }
+        .char-dropdown-body { flex: 1; overflow-y: auto; padding: 12px; }
+
+        /* 角色卡牌网格 */
+        .char-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
+        .char-card { background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+        .char-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #667eea; }
+        .char-card-avatar { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .char-card-name { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .char-card-role { font-size: 10px; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
+        .char-card-morality { font-size: 10px; color: #666; }
+        .char-card-morality.positive { color: #52c41a; }
+        .char-card-morality.negative { color: #f5222d; }
+        .char-card-morality.neutral { color: #faad14; }
+        .char-card-morality.evil { color: #722ed1; }
+
+        /* 角色分类标签 */
+        .char-category-row { margin-bottom: 16px; }
+        .char-category-title { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 8px; padding-left: 4px; display: flex; align-items: center; gap: 6px; }
+        .char-category-count { font-size: 11px; color: #999; font-weight: normal; }
+
+        /* AI生成按钮区域 */
+        .char-generate-area { padding: 20px; text-align: center; }
+        .char-generate-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .char-generate-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.3); }
+        .char-generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .char-generate-info { font-size: 12px; color: #666; margin-top: 12px; }
+
+        /* 旧列表样式保留 */
         .char-list-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; margin-bottom: 4px; }
         .char-list-item:hover { background: #f5f3ff; }
         .char-list-avatar { width: 36px; height: 36px; border-radius: 50%; background: #ede9fe; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
@@ -283,6 +321,45 @@
         .user-dropdown-item:hover { background: #f5f7fa; }
         .user-dropdown-item .item-icon { font-size: 15px; width: 20px; text-align: center; }
         .user-dropdown-divider { height: 1px; background: #f0f0f0; margin: 4px 0; }
+
+        /* 记忆库模态框样式 */
+        .memory-modal-content { background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.3); }
+        .memory-modal-header { padding: 16px 24px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: white; }
+        .memory-modal-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: #222; }
+        .memory-modal-close { background: none; border: none; font-size: 20px; color: #999; cursor: pointer; line-height: 1; transition: color 0.2s; }
+        .memory-modal-close:hover { color: #333; }
+        .memory-modal-body { padding: 24px; overflow-y: auto; flex: 1; background: #fafafa; }
+        .memory-modal-footer { padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: space-between; background: #f9f9f9; }
+        .memory-modal-footer div { display: flex; align-items: center; gap: 8px; }
+        .memory-modal-save { padding: 8px 16px; background: linear-gradient(135deg,#4a90d9,#5aa0e0); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; box-shadow: 0 2px 4px rgba(74,144,217,0.3); }
+        .memory-modal-save:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(74,144,217,0.4); }
+        .memory-modal-cancel { padding: 8px 16px; background: #e0e0e0; color: #333; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        .memory-modal-cancel:hover { background: #d0d0d0; }
+        .memory-modal-ai-optimize { padding: 8px 16px; background: linear-gradient(135deg,#fa709a,#fee140); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; box-shadow: 0 2px 4px rgba(250,112,154,0.3); }
+        .memory-modal-ai-optimize:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(250,112,154,0.4); }
+        .memory-modal-ai-optimize:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .memory-doc-item { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .memory-doc-title { display: inline-block; min-width: 100px; padding: 2px 4px; border-radius: 4px; border: 1px solid #ddd; outline: none; font-weight: 600; color: #222; background: #fff; }
+        .memory-doc-title:focus { border-color: #4a90d9; box-shadow: 0 0 0 2px rgba(74,144,217,0.2); }
+        .memory-doc-content { width: 100%; min-height: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 14px; resize: vertical; line-height: 1.6; }
+        .memory-doc-content:focus { border-color: #4a90d9; outline: none; box-shadow: 0 0 0 2px rgba(74,144,217,0.2); }
+        .memory-collection-item { cursor: pointer; transition: all 0.2s; }
+        .memory-collection-item:hover { transform: translateX(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .memory-collection-item:active { transform: scale(0.98); }
+
+        /* Works list styles */
+        .work-card { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #fafafa; border-radius: 8px; border: 1px solid #e8e8e8; transition: all 0.2s; }
+        .work-card:hover { background: #f0f0f0; border-color: #d0d0d0; }
+        .work-info { flex: 1; min-width: 0; }
+        .work-name { font-weight: 600; font-size: 14px; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .work-meta { font-size: 12px; color: #999; margin-top: 4px; }
+        .work-actions { display: flex; gap: 8px; margin-left: 16px; }
+        .btn-small { padding: 6px 14px; font-size: 12px; border-radius: 4px; border: 1px solid #ddd; background: white; cursor: pointer; transition: all 0.2s; }
+        .btn-small:hover { background: #f5f5f5; }
+        .btn-primary-small { background: linear-gradient(135deg,#4a90d9,#5aa0e0); color: white; border: none; }
+        .btn-primary-small:hover { background: linear-gradient(135deg,#3a80c9,#4a90d0); }
+        .btn-danger { color: #dc3545; border-color: #dc3545; background: white; }
+        .btn-danger:hover { background: #dc3545; color: white; }
     </style>
 </head>
 <body>
@@ -295,10 +372,54 @@
                 <div class="char-dropdown" id="char-dropdown">
                     <div class="char-dropdown-header">
                         <div class="char-dropdown-title">角色清单</div>
-                        <button class="char-add-btn" onclick="openCharModal('create')">+ 新角色</button>
+                        <div class="char-dropdown-tabs">
+                            <button class="char-dropdown-tab active" onclick="switchCharTab('ai-generated')" data-tab="ai-generated">AI生成</button>
+                            <button class="char-dropdown-tab" onclick="switchCharTab('ai-expand')" data-tab="ai-expand">AI扩写</button>
+                            <button class="char-dropdown-tab" onclick="switchCharTab('manual')" data-tab="manual">手动管理</button>
+                        </div>
                     </div>
                     <div class="char-dropdown-body" id="char-list-body">
-                        <div class="char-list-empty">暂无角色</div>
+                        <!-- AI生成选项卡 -->
+                        <div id="char-tab-ai-generated" class="char-tab-content">
+                            <div class="char-generate-area">
+                                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                                    <button class="char-generate-btn" onclick="generateCharactersByAI(1)" id="btn-generate-1">
+                                        ✨ 生成1个角色
+                                    </button>
+                                    <button class="char-generate-btn" onclick="generateCharactersByAI(10)" id="btn-generate-10">
+                                        ⚡ 批量生成10个
+                                    </button>
+                                </div>
+                                <div class="char-generate-info" id="char-generate-info">
+                                    将根据记忆库中的设定和预期字数自动计算角色数量
+                                </div>
+                                <div id="char-generate-progress" style="display: none; margin-top: 10px; padding: 10px; background: #f0f7ff; border-radius: 6px; font-size: 13px;">
+                                    <span id="char-generate-status">准备生成...</span>
+                                </div>
+                            </div>
+                            <div id="char-ai-generated-list"></div>
+                        </div>
+                        <!-- AI扩写选项卡 -->
+                        <div id="char-tab-ai-expand" class="char-tab-content" style="display:none;">
+                            <div class="char-generate-area">
+                                <button class="char-generate-btn" onclick="expandCharactersByAI()">
+                                    🔄 AI扩写现有角色
+                                </button>
+                                <div class="char-generate-info">
+                                    将为现有角色添加更详细的背景、关系和剧情线
+                                </div>
+                            </div>
+                            <div id="char-ai-expand-list"></div>
+                        </div>
+                        <!-- 手动管理选项卡 -->
+                        <div id="char-tab-manual" class="char-tab-content" style="display:none;">
+                            <div style="padding: 8px 0;">
+                                <button class="char-add-btn" onclick="openCharModal('create')" style="background: #667eea; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">+ 新建角色</button>
+                            </div>
+                            <div id="char-manual-list">
+                                <div class="char-list-empty">暂无角色，点击上方按钮创建</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -314,6 +435,7 @@
                     <div class="user-dropdown-divider"></div>
                     <div class="user-dropdown-item" onclick="openUserTab('model')"><span class="item-icon">🤖</span>模型设置</div>
                     <div class="user-dropdown-item" onclick="openUserTab('roleconfig')"><span class="item-icon">👥</span>角色模型</div>
+                    <div class="user-dropdown-item" onclick="openUserTab('memory')"><span class="item-icon">💾</span>记忆库</div>
                     <div class="user-dropdown-divider"></div>
                     <div class="user-dropdown-item" onclick="openUserTab('about')"><span class="item-icon">ℹ️</span>关于</div>
                 </div>
@@ -594,27 +716,25 @@
                     <div class="form-group">
                         <label>大纲文档</label>
                         <textarea id="outline-doc" placeholder="基于12核心要素，编写完整大纲..."></textarea>
-                        <button class="btn" style="margin-top: 8px;" onclick="generateOutlineDoc()">AI生成大纲文档</button>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateOutlineDoc()">✨ AI生成大纲文档</button>
                     </div>
 
                     <div class="form-group">
                         <label>人物设定文档</label>
                         <textarea id="characters-doc" placeholder="详细的人物设定..."></textarea>
-                        <button class="btn" style="margin-top: 8px;" onclick="generateCharactersDoc()">AI生成人物设定</button>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateCharactersDoc()">✨ AI生成人物设定</button>
                     </div>
 
                     <div class="form-group">
                         <label>世界观文档</label>
                         <textarea id="world-doc" placeholder="完整的世界观设定..."></textarea>
-                        <button class="btn" style="margin-top: 8px;" onclick="generateWorldDoc()">AI生成世界观文档</button>
+                        <button class="btn" style="margin-top: 8px;" onclick="generateWorldDoc()">✨ AI生成世界观文档</button>
                     </div>
 
-                    <div class="form-group">
-                        <label>AI生成结果</label>
-                        <div class="output-area" id="stage4-output">等待生成...</div>
+                    <div style="display:flex;gap:10px;margin-top:16px">
+                        <button class="btn" onclick="saveStage4ToMemory()">💾 保存设定文档</button>
+                        <button class="btn btn-success" onclick="completeStage4()">设定定稿，开始章节创作</button>
                     </div>
-
-                    <button class="btn" onclick="completeStage4()">设定定稿，开始章节创作</button>
                 </div>
             </div>
 
@@ -785,6 +905,11 @@
                 </div>
 
                 <!-- 手动创建/编辑 -->
+                <!-- 角色详情视图 -->
+                <div id="char-detail-view" class="char-form-section" style="display:none; max-height: 70vh; overflow-y: auto; padding-right: 8px;">
+                    <!-- 动态填充完整角色信息 -->
+                </div>
+
                 <div id="char-form-manual" class="char-form-section">
                     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
                         <div class="form-group"><label>姓名 *</label><input type="text" id="manual-name" placeholder="角色姓名"></div>
@@ -904,8 +1029,7 @@
                 <div class="settings-nav-item" data-tab="works" onclick="switchSettingsTab('works')">📚 我的作品</div>
                 <div class="settings-nav-item" data-tab="model" onclick="switchSettingsTab('model')">🤖 模型设置</div>
                 <div class="settings-nav-item" data-tab="roleconfig" onclick="switchSettingsTab('roleconfig')">👥 角色模型</div>
-                <div class="settings-nav-item" data-tab="projects" onclick="switchSettingsTab('projects')">📁 项目管理</div>
-                <div class="settings-nav-item" data-tab="memory" onclick="switchSettingsTab('memory')">💾 记忆库管理</div>
+                <div class="settings-nav-item" data-tab="memory" onclick="switchSettingsTab('memory')">💾 记忆库</div>
                 <div class="settings-nav-item" data-tab="about" onclick="switchSettingsTab('about')">ℹ️ 关于</div>
             </div>
             <!-- 中间：供应商列表 -->
@@ -1081,7 +1205,7 @@
 
                         <!-- 自定义提供商管理 -->
                         <div class="provider-config" id="config-custom" style="display:none">
-                            <!-- 已添加的自定义提供商列表 -->
+                            <!-- 已添加的自定义提供商列表（仅在添加新供应商时显示） -->
                             <div id="custom-providers-list" style="margin-bottom:20px"></div>
                             <!-- 添加新提供商表单 -->
                             <div class="config-form" id="custom-provider-form">
@@ -1118,6 +1242,8 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- 动态生成的自定义供应商配置面板容器 -->
+                        <div id="custom-provider-configs"></div>
                     </div><!-- end api-config-panel -->
 
                     <!-- 保存配置按钮区 -->
@@ -1183,37 +1309,18 @@
                     </div>
                 </div>
 
-                <!-- 项目管理页面 -->
-                <div class="settings-section" id="settings-projects" style="display:none">
-                    <div class="settings-detail-header">
-                        <div class="settings-detail-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:white;font-size:20px">📁</div>
-                        <div>
-                            <div class="settings-detail-title">项目管理</div>
-                            <div style="font-size:12px;color:#999;margin-top:2px">管理所有本地项目</div>
-                        </div>
-                    </div>
-                    <div class="settings-detail-body">
-                        <div style="margin-bottom:16px">
-                            <button class="btn btn-success" onclick="refreshProjectList()">🔄 刷新列表</button>
-                        </div>
-                        <div id="projects-list" style="display:flex;flex-direction:column;gap:10px">
-                            <div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">加载中...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 记忆库管理页面 -->
-                <div class="settings-section" id="settings-memory" style="display:none">
+                <!-- 记忆库页面 -->
+                <div class="settings-section" id="settings-memory">
                     <div class="settings-detail-header">
                         <div class="settings-detail-icon" style="background:linear-gradient(135deg,#fa709a,#fee140);color:white;font-size:20px">💾</div>
                         <div>
-                            <div class="settings-detail-title">记忆库管理</div>
-                            <div style="font-size:12px;color:#999;margin-top:2px" id="memory-current-project">当前项目: 无</div>
+                            <div class="settings-detail-title">记忆库</div>
+                            <div style="font-size:12px;color:#999;margin-top:2px">管理项目资料</div>
                         </div>
                     </div>
                     <div class="settings-detail-body">
-                        <div id="memory-collections-list">
-                            <div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">请先打开一个项目</div>
+                        <div id="memory-projects-list">
+                            <div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">加载中...</div>
                         </div>
                     </div>
                 </div>
@@ -1264,20 +1371,56 @@
 
         async function completeStage1() {
             const name = document.getElementById('project-name').value;
+            const genreMain = document.getElementById('genre-main').value;
+            const genreSub = document.getElementById('genre-sub').value;
+            const genreStyle = document.getElementById('genre-style').value;
+            const genreSpecial = document.getElementById('genre-special').value;
             const genre = document.getElementById('genre').value;
             const requirements = document.getElementById('requirements').value;
             const pov = getPov();
             const channel = getChannel();
             const platform = getPlatform();
 
-            if (!name || !genre) {
-                alert('请填写项目名称并选择小说类型');
+            if (!name || !genreMain || !genreSub) {
+                alert('请填写项目名称并选择小说类型（大类和子类）');
                 return;
             }
 
+            // 收集 Stage 1 数据
+            const stage1Data = {
+                name: name,
+                genre: genre,
+                genreMain: genreMain,
+                genreSub: genreSub,
+                genreStyle: genreStyle,
+                genreSpecial: genreSpecial,
+                requirements: requirements,
+                pov: pov,
+                channel: channel,
+                platform: platform
+            };
+
             try {
-                const project = await workflowManager.createProject(name, 'professional', {genre, requirements, pov, channel, platform});
+                const project = await workflowManager.createProject(name, 'professional', stage1Data);
                 memoryClient = new MemoryClient(project.id);
+
+                // 保存阶段数据
+                await workflowManager.updateStage(1, 'completed', stage1Data);
+
+                // 保存Stage 1确认资料到记忆库
+                try {
+                    // 小说类型
+                    const genreText = `大类：${genreMain}\n子类：${genreSub}\n流派：${genreStyle || '未选择'}\n特殊：${genreSpecial || '未选择'}`;
+                    await memoryClient.addDocument('world', '小说类型', genreText);
+
+                    // 核心需求
+                    if (requirements) {
+                        const reqText = `写作视角：${pov}\n频道：${channel}\n拟刊登平台：${platform}\n\n核心需求：\n${requirements}`;
+                        await memoryClient.addDocument('world', '核心需求', reqText);
+                    }
+                } catch (e) {
+                    console.error('保存Stage 1资料到记忆库失败:', e);
+                }
 
                 document.getElementById('current-project-id').textContent = project.id;
                 document.getElementById('current-stage').textContent = '2';
@@ -1323,7 +1466,9 @@
                     await memoryClient.addDocument('plot', '创意建议', suggestions);
                     count++;
                 }
-                alert('✅ 已保存 ' + count + ' 项调研结果到项目记忆库');
+                // 保存当前阶段状态为 stage 3（下次从 stage 3 开始）
+                await memoryClient.setProjectStage(3);
+                alert('✅ 已保存 ' + count + ' 项调研结果到项目记忆库，下次进入将是阶段三');
             } catch (error) {
                 alert('保存失败: ' + error.message);
                 console.error('保存调研结果失败:', error);
@@ -1334,11 +1479,20 @@
             const market = document.getElementById('market-analysis').value;
             const ranking = document.getElementById('ranking-research').value;
             const analysis = document.getElementById('novel-analysis').value;
+            const suggestions = document.getElementById('creative-suggestions').value;
 
             if (!market || !ranking || !analysis) {
                 alert('请完成所有调研内容');
                 return;
             }
+
+            // 收集 Stage 2 数据
+            const stage2Data = {
+                market: market,
+                ranking: ranking,
+                analysis: analysis,
+                suggestions: suggestions
+            };
 
             // 保存调研结果到记忆库
             if (memoryClient) {
@@ -1346,7 +1500,6 @@
                     await memoryClient.addDocument('plot', '市场分析', market);
                     await memoryClient.addDocument('plot', '榜单调研', ranking);
                     await memoryClient.addDocument('plot', '拆文分析', analysis);
-                    const suggestions = document.getElementById('creative-suggestions').value;
                     if (suggestions) {
                         await memoryClient.addDocument('plot', '创意建议', suggestions);
                     }
@@ -1355,9 +1508,45 @@
                 }
             }
 
+            // 保存阶段数据
+            try {
+                await workflowManager.updateStage(2, 'completed', stage2Data);
+            } catch (error) {
+                console.error('保存阶段数据失败:', error);
+            }
+
             document.querySelector('.stage-item[data-stage="2"]').classList.add('completed');
             alert('✅ 阶段二完成！进入阶段三：团队讨论');
             showStage(3);
+        }
+
+        async function completeStage3() {
+            if (!stage3Discussion || !stage3Discussion.discussionHistory || stage3Discussion.discussionHistory.length === 0) {
+                alert('请先完成项目讨论会');
+                return;
+            }
+
+            // 保存讨论结果到记忆库
+            if (memoryClient) {
+                try {
+                    // 保存已确认的内容
+                    const confirmedDocs = await memoryClient.queryDocuments('confirmed');
+                    if (confirmedDocs && confirmedDocs.length > 0) {
+                        await memoryClient.addDocument('plot', '12核心要素确认', `议题确认总结：\n共完成 ${confirmedDocs.length} 个议题的讨论确认`, {
+                            discussion_count: confirmedDocs.length,
+                            confirmed_at: new Date().toISOString()
+                        });
+                    }
+                    // 保存当前阶段状态为 stage 4（下次从 stage 4 开始）
+                    await memoryClient.setProjectStage(4);
+                } catch (error) {
+                    console.error('保存讨论结果失败:', error);
+                }
+            }
+
+            document.querySelector('.stage-item[data-stage="3"]').classList.add('completed');
+            alert('✅ 阶段三完成！进入阶段四：基础设定定稿');
+            showStage(4);
         }
 
         async function generateRankingResearch() {
@@ -1902,6 +2091,8 @@ ${analysis}
                     if (world) {
                         await memoryClient.addDocument('world', '世界观文档', world);
                     }
+                    // 保存当前阶段状态为 stage 5（表示下次从 stage 5 开始）
+                    await memoryClient.setProjectStage(5);
                 } catch (error) {
                     console.error('保存设定文档失败:', error);
                 }
@@ -1912,25 +2103,88 @@ ${analysis}
             showStage(5);
         }
 
+        async function saveStage4ToMemory() {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            const outline = document.getElementById('outline-doc').value;
+            const characters = document.getElementById('characters-doc').value;
+            const world = document.getElementById('world-doc').value;
+
+            if (!outline && !characters && !world) {
+                alert('请至少填写一项设定文档');
+                return;
+            }
+
+            try {
+                let savedCount = 0;
+                if (outline) {
+                    await memoryClient.addDocument('plot', '大纲文档', outline);
+                    savedCount++;
+                }
+                if (characters) {
+                    await memoryClient.addDocument('characters', '人物设定文档', characters);
+                    savedCount++;
+                }
+                if (world) {
+                    await memoryClient.addDocument('world', '世界观文档', world);
+                    savedCount++;
+                }
+                // 保存当前阶段状态为 stage 5（下次从 stage 5 开始）
+                await memoryClient.setProjectStage(5);
+                alert(`✅ 已保存 ${savedCount} 项设定文档到记忆库，下次进入将是阶段五`);
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+                console.error('保存设定文档失败:', error);
+            }
+        }
+
         async function generateOutlineDoc() {
             if (!memoryClient) {
                 alert('请先创建项目');
                 return;
             }
 
-            const outputArea = document.getElementById('stage4-output');
-            outputArea.textContent = '正在从记忆库读取核心要素并生成大纲...';
+            // 添加编辑角色活动日志
+            addRoleLog('editor', '📝 编辑开始生成大纲文档...', 'info', 'pending');
 
             try {
-                // 从记忆库读取12核心要素
+                // 从记忆库读取Stage 1资料
                 const worldDocs = await memoryClient.queryDocuments('world');
-
-                let elementsContext = '核心要素：\n';
+                let stage1Context = '';
                 worldDocs.forEach(doc => {
-                    elementsContext += `\n【${doc.title}】\n${doc.content}\n`;
+                    if (doc.title.includes('小说类型') || doc.title.includes('核心需求')) {
+                        stage1Context += `\n【${doc.title}】\n${doc.content}\n`;
+                    }
                 });
 
-                const prompt = `作为总编，基于以下12核心要素，编写完整的小说大纲：
+                // 从记忆库读取Stage 2资料
+                const plotDocs = await memoryClient.queryDocuments('plot');
+                let stage2Context = '';
+                plotDocs.forEach(doc => {
+                    if (doc.title.includes('市场分析') || doc.title.includes('榜单调研') ||
+                        doc.title.includes('拆文分析') || doc.title.includes('创意建议')) {
+                        stage2Context += `\n【${doc.title}】\n${doc.content.substring(0, 500)}...\n`;
+                    }
+                });
+
+                // 从记忆库读取Stage 3核心要素定稿
+                const confirmedDocs = await memoryClient.queryDocuments('confirmed');
+                let stage3Context = '';
+                confirmedDocs.forEach(doc => {
+                    stage3Context += `\n【${doc.title}】\n${doc.content}\n`;
+                });
+
+                let elementsContext = '';
+                if (stage1Context) elementsContext += `=== Stage 1 需求确认 ===${stage1Context}\n`;
+                if (stage2Context) elementsContext += `=== Stage 2 深度调研 ===${stage2Context}\n`;
+                if (stage3Context) elementsContext += `=== Stage 3 核心要素定稿 ===${stage3Context}\n`;
+
+                addRoleLog('editor', '📚 编辑已读取记忆库数据，准备生成大纲...', 'info', 'pending');
+
+                const prompt = `作为编辑，基于以下已确认的项目资料，编写完整的小说大纲：
 
 ${elementsContext}
 
@@ -1941,28 +2195,25 @@ ${elementsContext}
 4. 伏笔埋设与回收计划
 5. 高潮章节安排
 
-要求：逻辑严密、节奏合理、爽点密集。`;
+要求：基于已确认的核心要素定稿，逻辑严密、节奏合理、爽点密集。`;
 
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'chief_editor'})
+                    body: JSON.stringify({prompt, role: 'editor'})
                 });
 
-                addRoleLog('chief_editor', '正在调用总编角色...', 'info', 'pending');
+                addRoleLog('editor', '🤖 编辑正在调用AI生成大纲...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('outline-doc').value = result.content;
-                    outputArea.textContent = '✅ 大纲文档已生成并填入';
-                    addRoleLog('chief_editor', '✅ 大纲文档生成完成<br><span class="response">内容已填入大纲文档框</span>', 'success', 'success');
+                    addRoleLog('editor', '✅ 大纲文档生成完成<br><span class="response">内容已填入大纲文档框</span>', 'success', 'success');
                 } else {
-                    outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('chief_editor', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('editor', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
-                outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('chief_editor', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('editor', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
@@ -1972,20 +2223,34 @@ ${elementsContext}
                 return;
             }
 
-            const outputArea = document.getElementById('stage4-output');
-            outputArea.textContent = '正在生成人物设定文档...';
+            // 添加编辑角色活动日志
+            addRoleLog('editor', '📝 编辑开始生成人物设定文档...', 'info', 'pending');
 
             try {
-                const worldDocs = await memoryClient.queryDocuments('world');
-
+                // 从记忆库读取Stage 3人物相关定稿
+                const confirmedDocs = await memoryClient.queryDocuments('confirmed');
                 let elementsContext = '';
-                worldDocs.forEach(doc => {
+                confirmedDocs.forEach(doc => {
                     if (doc.title.includes('主角') || doc.title.includes('配角')) {
                         elementsContext += `\n【${doc.title}】\n${doc.content}\n`;
                     }
                 });
 
-                const prompt = `基于以下人物要素，编写详细的人物设定文档：
+                // 也读取势力设定（配角与势力相关）
+                confirmedDocs.forEach(doc => {
+                    if (doc.title.includes('势力')) {
+                        elementsContext += `\n【${doc.title}】\n${doc.content}\n`;
+                    }
+                });
+
+                if (!elementsContext) {
+                    addRoleLog('editor', '❌ 未找到人物相关定稿，请先完成Stage 3的讨论', 'error', 'error');
+                    return;
+                }
+
+                addRoleLog('editor', '📚 编辑已读取人物数据，准备生成人物设定...', 'info', 'pending');
+
+                const prompt = `基于以下已确认的人物要素定稿，编写详细的人物设定文档：
 
 ${elementsContext}
 
@@ -1998,26 +2263,25 @@ ${elementsContext}
 6. 出场章节规划
 7. 角色弧光（成长变化）
 
-要求：人物立体、性格鲜明、功能明确。`;
+要求：基于已确认的定稿，人物立体、性格鲜明、功能明确。`;
 
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'researcher'})
+                    body: JSON.stringify({prompt, role: 'editor'})
                 });
+
+                addRoleLog('editor', '🤖 编辑正在调用AI生成人物设定...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('characters-doc').value = result.content;
-                    outputArea.textContent = '✅ 人物设定文档已生成并填入';
-                    addRoleLog('researcher', '✅ 人物设定文档生成完成', 'success', 'success');
+                    addRoleLog('editor', '✅ 人物设定文档生成完成<br><span class="response">内容已填入人物设定框</span>', 'success', 'success');
                 } else {
-                    outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('editor', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
-                outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('editor', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
@@ -2027,21 +2291,29 @@ ${elementsContext}
                 return;
             }
 
-            const outputArea = document.getElementById('stage4-output');
-            outputArea.textContent = '正在生成世界观文档...';
+            // 添加编辑角色活动日志
+            addRoleLog('editor', '📝 编辑开始生成世界观文档...', 'info', 'pending');
 
             try {
-                const worldDocs = await memoryClient.queryDocuments('world');
-
+                // 从记忆库读取Stage 3世界观相关定稿
+                const confirmedDocs = await memoryClient.queryDocuments('confirmed');
                 let elementsContext = '';
-                worldDocs.forEach(doc => {
+                confirmedDocs.forEach(doc => {
                     if (doc.title.includes('世界观') || doc.title.includes('等级') ||
-                        doc.title.includes('技能') || doc.title.includes('势力')) {
+                        doc.title.includes('技能') || doc.title.includes('势力') ||
+                        doc.title.includes('主线') || doc.title.includes('副本')) {
                         elementsContext += `\n【${doc.title}】\n${doc.content}\n`;
                     }
                 });
 
-                const prompt = `基于以下世界观要素，编写完整的世界观设定文档：
+                if (!elementsContext) {
+                    addRoleLog('editor', '❌ 未找到世界观相关定稿，请先完成Stage 3的讨论', 'error', 'error');
+                    return;
+                }
+
+                addRoleLog('editor', '📚 编辑已读取世界观数据，准备生成世界观文档...', 'info', 'pending');
+
+                const prompt = `基于以下已确认的世界观要素定稿，编写完整的世界观设定文档：
 
 ${elementsContext}
 
@@ -2053,28 +2325,25 @@ ${elementsContext}
 5. 资源体系（货币、宝物、材料）
 6. 规则设定（世界法则、限制条件）
 
-要求：体系完整、逻辑自洽、易于扩展。`;
+要求：基于已确认的定稿，体系完整、逻辑自洽、易于扩展。`;
 
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt, role: 'researcher'})
+                    body: JSON.stringify({prompt, role: 'editor'})
                 });
 
-                addRoleLog('researcher', '正在调用研究员角色...', 'info', 'pending');
+                addRoleLog('editor', '🤖 编辑正在调用AI生成世界观文档...', 'info', 'pending');
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('world-doc').value = result.content;
-                    outputArea.textContent = '✅ 世界观文档已生成并填入';
-                    addRoleLog('researcher', '✅ 世界观文档生成完成', 'success', 'success');
+                    addRoleLog('editor', '✅ 世界观文档生成完成<br><span class="response">内容已填入世界观文档框</span>', 'success', 'success');
                 } else {
-                    outputArea.textContent = '❌ 生成失败: ' + result.error;
-                    addRoleLog('researcher', '❌ 生成失败: ' + result.error, 'error', 'error');
+                    addRoleLog('editor', '❌ 生成失败: ' + result.error, 'error', 'error');
                 }
             } catch (error) {
-                outputArea.textContent = '❌ 请求失败: ' + error.message;
-                addRoleLog('researcher', '❌ 请求失败: ' + error.message, 'error', 'error');
+                addRoleLog('editor', '❌ 请求失败: ' + error.message, 'error', 'error');
             }
         }
 
@@ -2086,12 +2355,15 @@ ${elementsContext}
 
             const outputArea = document.getElementById('stage5-output');
             outputArea.textContent = `正在创作第${num}章...`;
+            addRoleLog('writer', `📝 正在读取记忆库中的设定资料...`, 'info', 'pending');
 
             try {
                 // 从记忆库读取所有设定
                 const worldDocs = await memoryClient.queryDocuments('world');
                 const characterDocs = await memoryClient.queryDocuments('characters');
                 const plotDocs = await memoryClient.queryDocuments('plot');
+
+                addRoleLog('writer', `📚 已读取设定资料，开始创作第${num}章...`, 'info', 'pending');
 
                 let context = '=== 世界观设定 ===\n';
                 worldDocs.forEach(doc => {
@@ -2216,6 +2488,11 @@ ${num === 1 ? '这是第一章，需要：\n- 快速引入主角\n- 展示初始
         }
 
         async function generateImprovementSuggestions() {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
             const feedback = document.getElementById('reader-feedback').value;
             const score = document.getElementById('feedback-score').value;
             const outputArea = document.getElementById('stage6-output');
@@ -2225,16 +2502,62 @@ ${num === 1 ? '这是第一章，需要：\n- 快速引入主角\n- 展示初始
                 return;
             }
 
-            outputArea.textContent = '正在分析反馈并生成改进建议...';
+            outputArea.textContent = '正在从记忆库读取资料并生成改进建议...';
+            addRoleLog('editor', '📝 正在读取记忆库中的章节和设定资料...', 'info', 'pending');
 
-            const prompt = `作为网文编辑，分析以下读者反馈并提出改进建议：
+            try {
+                // 从记忆库读取相关资料
+                const chapters = await memoryClient.queryDocuments('chapters');
+                const characters = await memoryClient.queryDocuments('characters');
+                const worldDocs = await memoryClient.queryDocuments('world');
+                const plotDocs = await memoryClient.queryDocuments('plot');
+
+                addRoleLog('editor', '📚 已读取资料，正在分析读者反馈...', 'info', 'pending');
+
+                // 构建上下文
+                let context = '';
+
+                if (chapters.length > 0) {
+                    context += '\n=== 已创作章节摘要 ===\n';
+                    chapters.slice(0, 5).forEach(ch => {
+                        context += `【${ch.title}】${ch.content.substring(0, 150)}...\n`;
+                    });
+                    if (chapters.length > 5) {
+                        context += `...等共${chapters.length}章\n`;
+                    }
+                }
+
+                if (characters.length > 0) {
+                    context += '\n=== 主要人物 ===\n';
+                    characters.slice(0, 5).forEach(c => {
+                        context += `【${c.title}】${c.content.substring(0, 100)}...\n`;
+                    });
+                }
+
+                if (worldDocs.length > 0) {
+                    context += '\n=== 世界观设定 ===\n';
+                    worldDocs.slice(0, 3).forEach(w => {
+                        context += `【${w.title}】${w.content.substring(0, 100)}...\n`;
+                    });
+                }
+
+                if (plotDocs.length > 0) {
+                    context += '\n=== 剧情设定 ===\n';
+                    plotDocs.slice(0, 3).forEach(p => {
+                        context += `【${p.title}】${p.content.substring(0, 100)}...\n`;
+                    });
+                }
+
+                const prompt = `作为网文编辑，分析以下读者反馈并提出改进建议：
 
 评分：${score}/10
 
 读者反馈：
 ${feedback}
 
-请分析：
+${context}
+
+请结合以上设定和章节内容，分析：
 1. 反馈中的核心问题（节奏、人物、剧情、爽点等）
 2. 问题的根本原因
 3. 具体的改进方案（可操作的建议）
@@ -2243,7 +2566,6 @@ ${feedback}
 
 请输出专业、可执行的改进建议。`;
 
-            try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -2430,22 +2752,140 @@ ${feedback}
             alert('个人信息已保存');
         }
 
-        function loadWorksList() {
+        async function loadWorksList() {
             const list = document.getElementById('works-list');
             if (!list) return;
-            const projects = JSON.parse(localStorage.getItem('ai_editorial_projects') || '[]');
-            if (projects.length === 0) {
-                list.innerHTML = '<div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">暂无作品，开始创建项目吧</div>';
-                return;
+            list.innerHTML = '<div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">加载中...</div>';
+
+            try {
+                const projects = await workflowManager.listProjects();
+                if (projects.length === 0) {
+                    list.innerHTML = `
+                        <div style="text-align:center;padding:60px 20px">
+                            <div style="width:64px;height:64px;margin:0 auto 16px;background:#f0f0f0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#bbb">➕</div>
+                            <div style="font-size:14px;color:#666;margin-bottom:20px">暂无作品</div>
+                            <div style="font-size:12px;color:#999">完成阶段一后，项目将自动保存在这里</div>
+                        </div>`;
+                    return;
+                }
+                list.innerHTML = projects.map(p => `
+                    <div class="work-card">
+                        <div class="work-info">
+                            <div class="work-name">${p.name || '未命名项目'}</div>
+                            <div class="work-meta">阶段 ${p.current_stage} · ${p.updated_at ? p.updated_at.split('T')[0] : '未知时间'}</div>
+                        </div>
+                        <div class="work-actions">
+                            <button class="btn-small btn-primary-small" onclick="openProject('${p.id}')">打开</button>
+                            <button class="btn-small btn-danger" onclick="deleteProjectFromWorks('${p.id}', '${p.name.replace(/'/g, "\\'")}')">删除</button>
+                        </div>
+                    </div>`).join('');
+            } catch (error) {
+                list.innerHTML = `<div style="text-align:center;color:#f56c6c;padding:20px;font-size:14px">加载失败: ${error.message}</div>`;
             }
-            list.innerHTML = projects.map((p, i) => `
-                <div style="border:1px solid #e8e8e8;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;background:#fafafa">
-                    <div>
-                        <div style="font-weight:600;font-size:14px;color:#222">${p.name || '未命名项目'}</div>
-                        <div style="font-size:12px;color:#999;margin-top:3px">${p.genre || ''} · ${p.updatedAt || '未知时间'}</div>
-                    </div>
-                    <button class="btn-primary" style="font-size:12px;padding:6px 14px" onclick="loadProjectFromSettings(${i})">打开</button>
-                </div>`).join('');
+        }
+
+        async function openProject(projectId) {
+            try {
+                const project = await workflowManager.loadProject(projectId);
+                memoryClient = new MemoryClient(projectId);
+
+                // 恢复基本信息
+                document.getElementById('project-name').value = project.settings?.name || project.name;
+                document.getElementById('nav-project-name').textContent = project.name;
+                document.getElementById('current-project-id').textContent = projectId;
+                document.getElementById('current-stage').textContent = project.current_stage;
+                document.getElementById('project-info').style.display = 'block';
+
+                // 标记已完成的阶段
+                for (let i = 1; i < project.current_stage; i++) {
+                    const stageItem = document.querySelector(`.stage-item[data-stage="${i}"]`);
+                    if (stageItem && project.stages?.[i]?.status === 'completed') {
+                        stageItem.classList.add('completed');
+                    }
+                }
+
+                // 恢复表单数据
+                restoreStageData(project);
+
+                // 跳转到当前阶段
+                showStage(project.current_stage);
+
+                // 关闭设置弹窗
+                closeSettings();
+
+                console.log('项目已加载:', project.name);
+            } catch (error) {
+                alert('打开项目失败: ' + error.message);
+            }
+        }
+
+        function restoreStageData(project) {
+            // 恢复 Stage 1 数据
+            const stage1 = project.stages?.['1']?.data || project.settings;
+            if (stage1) {
+                if (stage1.name) document.getElementById('project-name').value = stage1.name;
+                if (stage1.genreMain) {
+                    document.getElementById('genre-main').value = stage1.genreMain;
+                    onGenreMainChange(); // 触发子类更新
+                }
+                if (stage1.genreSub) {
+                    setTimeout(() => {
+                        document.getElementById('genre-sub').value = stage1.genreSub;
+                    }, 100);
+                }
+                if (stage1.genreStyle) document.getElementById('genre-style').value = stage1.genreStyle;
+                if (stage1.genreSpecial) document.getElementById('genre-special').value = stage1.genreSpecial;
+                if (stage1.requirements) document.getElementById('requirements').value = stage1.requirements;
+
+                // 恢复单选项
+                if (stage1.pov) {
+                    const povRadio = document.querySelector(`input[name="pov"][value="${stage1.pov}"]`);
+                    if (povRadio) { povRadio.checked = true; onPovChange(); }
+                }
+                if (stage1.channel) {
+                    const channelRadio = document.querySelector(`input[name="channel"][value="${stage1.channel}"]`);
+                    if (channelRadio) { channelRadio.checked = true; onChannelChange(); }
+                }
+                if (stage1.platform) {
+                    const platformRadio = document.querySelector(`input[name="platform"][value="${stage1.platform}"]`);
+                    if (platformRadio) { platformRadio.checked = true; onPlatformChange(); }
+                }
+
+                // 更新隐藏的 genre 字段
+                _updateGenreHidden();
+            }
+
+            // 恢复 Stage 2 数据
+            const stage2 = project.stages?.['2']?.data;
+            if (stage2) {
+                if (stage2.market) document.getElementById('market-analysis').value = stage2.market;
+                if (stage2.ranking) document.getElementById('ranking-research').value = stage2.ranking;
+                if (stage2.analysis) document.getElementById('novel-analysis').value = stage2.analysis;
+                if (stage2.suggestions) document.getElementById('creative-suggestions').value = stage2.suggestions;
+            }
+        }
+
+        async function deleteProjectFromWorks(projectId, projectName) {
+            if (!confirm(`确定删除作品「${projectName}」？\n\n此操作不可恢复，所有相关数据将被删除。`)) return;
+
+            try {
+                const response = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    alert('作品已删除');
+                    await loadWorksList();
+                } else {
+                    alert('删除失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+
+        function createNewWork() {
+            closeSettings();
+            showStage(1);
+            alert('请在阶段一填写项目信息并点击「完成需求确认」来创建新作品');
         }
 
         // ========== 项目管理功能 ==========
@@ -2496,8 +2936,12 @@ ${feedback}
 
         async function openProjectFromManagement(projectId) {
             closeSettings();
-            // 重新加载页面到指定项目
-            window.location.href = window.location.pathname + '?project=' + projectId;
+            await openProject(projectId);
+        }
+
+        async function loadProjectFromSettings(projectId) {
+            closeSettings();
+            await openProject(projectId);
         }
 
         async function backupProject(projectId, projectName) {
@@ -2557,56 +3001,45 @@ ${feedback}
             }
         }
 
-        // ========== 记忆库管理功能 ==========
-        let currentMemoryProjectId = null;
+        // ========== 记忆库管理功能 (VSCode风格折叠展开) ==========
+        // 记忆库相关全局变量
+        let memoryEditingData = {}; // 当前编辑的数据缓存
+        let memoryEditingProject = null; // 当前编辑的项目ID
 
         async function loadMemoryCollections() {
-            const list = document.getElementById('memory-collections-list');
-            const projectTitle = document.getElementById('memory-current-project');
+            const list = document.getElementById('memory-projects-list');
             if (!list) return;
 
-            if (!memoryClient) {
-                list.innerHTML = '<div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">请先打开一个项目</div>';
-                if (projectTitle) projectTitle.textContent = '当前项目: 无';
-                return;
-            }
-
-            currentMemoryProjectId = memoryClient.projectId;
-            if (projectTitle) projectTitle.textContent = '当前项目: ' + (document.getElementById('nav-project-name')?.textContent || '未知项目');
+            list.innerHTML = '<div style="text-align:center;color:#bbb;padding:40px 0;font-size:14px">加载中...</div>';
 
             try {
-                // 获取各集合的文档数量
-                const collections = ['world', 'characters', 'skills', 'chapters', 'foreshadowing', 'plot', 'reviews', 'discussions', 'confirmed'];
-                const collectionInfo = [];
+                // 获取所有项目列表
+                const response = await fetch('/api/projects');
+                const result = await response.json();
 
-                for (const coll of collections) {
-                    try {
-                        const response = await fetch(`/api/memory/${memoryClient.projectId}/${coll}`);
-                        const result = await response.json();
-                        if (result.success) {
-                            collectionInfo.push({
-                                name: coll,
-                                label: getCollectionLabel(coll),
-                                count: result.documents.length
-                            });
-                        }
-                    } catch (e) {
-                        console.error(`加载 ${coll} 失败:`, e);
-                    }
+                if (!result.success || result.projects.length === 0) {
+                    list.innerHTML = `
+                        <div style="text-align:center;padding:60px 20px">
+                            <div style="width:64px;height:64px;margin:0 auto 16px;background:#f0f0f0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#bbb">📁</div>
+                            <div style="font-size:14px;color:#666;margin-bottom:20px">暂无项目</div>
+                            <div style="font-size:12px;color:#999">创建项目后，资料将保存在这里</div>
+                        </div>`;
+                    return;
                 }
 
-                list.innerHTML = collectionInfo.map(c => `
-                    <div style="border:1px solid #e8e8e8;border-radius:8px;padding:14px 16px;background:#fafafa;margin-bottom:10px">
-                        <div style="display:flex;justify-content:space-between;align-items:center">
-                            <div>
-                                <div style="font-weight:600;font-size:14px;color:#222">${c.label} <span style="font-size:11px;background:#e1e8ef;color:#666;padding:2px 6px;border-radius:4px;margin-left:8px">${c.count} 条记录</span></div>
-                                <div style="font-size:12px;color:#999;margin-top:3px">${c.name}.json</div>
+                // 显示项目列表
+                list.innerHTML = result.projects.map(p => `
+                    <div class="memory-project-item" data-project-id="${p.id}" style="border:1px solid #e8e8e8;border-radius:8px;margin-bottom:10px;overflow:hidden">
+                        <div class="memory-project-header" onclick="toggleMemoryProject('${p.id}')" style="padding:14px 16px;background:#fafafa;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none">
+                            <div style="display:flex;align-items:center;gap:10px">
+                                <span class="memory-expand-icon" style="font-size:12px;color:#666;transition:transform 0.2s">▶</span>
+                                <div style="font-weight:600;font-size:14px;color:#222">${p.name || '未命名项目'}</div>
+                                <span style="font-size:11px;background:#e1e8ef;color:#666;padding:2px 8px;border-radius:4px">阶段${p.current_stage || 1}</span>
                             </div>
-                            <div style="display:flex;gap:8px">
-                                <button class="btn" style="font-size:11px" onclick="exportCollection('${c.name}')">导出</button>
-                                <button class="btn" style="font-size:11px" onclick="importCollection('${c.name}')">导入</button>
-                                <button class="btn" style="font-size:11px;background:#fff0f0;color:#e53e3e;border-color:#fecdd3" onclick="clearCollection('${c.name}')">清空</button>
-                            </div>
+                            <div style="font-size:12px;color:#999">${p.updated_at ? p.updated_at.split('T')[0] : ''}</div>
+                        </div>
+                        <div class="memory-project-content" id="memory-content-${p.id}" style="display:none;background:white">
+                            <div style="padding:16px;text-align:center;color:#bbb;font-size:13px">加载中...</div>
                         </div>
                     </div>`).join('');
             } catch (error) {
@@ -2614,70 +3047,234 @@ ${feedback}
             }
         }
 
-        function getCollectionLabel(name) {
-            const labels = {
-                'world': '世界观',
-                'characters': '角色设定',
-                'skills': '技能体系',
-                'chapters': '章节列表',
-                'foreshadowing': '伏笔钩子',
-                'plot': '剧情大纲',
-                'reviews': '读者反馈',
-                'discussions': '讨论记录',
-                'confirmed': '确认内容'
-            };
-            return labels[name] || name;
-        }
+        async function toggleMemoryProject(projectId) {
+            const contentEl = document.getElementById(`memory-content-${projectId}`);
+            const headerEl = contentEl?.previousElementSibling;
+            const iconEl = headerEl?.querySelector('.memory-expand-icon');
 
-        function exportCollection(collectionName) {
-            if (!currentMemoryProjectId) return;
-            window.location.href = `/api/projects/${currentMemoryProjectId}/memory/${collectionName}`;
-        }
+            if (!contentEl) return;
 
-        function importCollection(collectionName) {
-            if (!currentMemoryProjectId) return;
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
+            // 切换展开/收起状态
+            if (contentEl.style.display === 'none') {
+                // 展开
+                iconEl.textContent = '▼';
+                contentEl.style.display = 'block';
 
-                const formData = new FormData();
-                formData.append('file', file);
-
-                try {
-                    const response = await fetch(`/api/projects/${currentMemoryProjectId}/memory/${collectionName}/import`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                        alert(`✅ ${result.message}`);
-                        loadMemoryCollections();
-                    } else {
-                        alert(`❌ 导入失败: ${result.error || '未知错误'}`);
-                    }
-                } catch (error) {
-                    alert(`❌ 导入失败: ${error.message}`);
+                // 如果没有加载过数据，则加载
+                if (contentEl.getAttribute('data-loaded') !== 'true') {
+                    await loadProjectMemoryData(projectId);
                 }
-            };
-            input.click();
+            } else {
+                // 收起
+                iconEl.textContent = '▶';
+                contentEl.style.display = 'none';
+            }
         }
 
-        function clearCollection(collectionName) {
-            if (!currentMemoryProjectId) return;
-            if (confirm(`确定要清空 "${getCollectionLabel(collectionName)}" 集合吗？此操作不可撤销！`)) {
-                fetch(`/api/projects/${currentMemoryProjectId}/memory/${collectionName}/clear`, {
-                    method: 'POST'
-                }).then(r => r.json()).then(result => {
-                    if (result.success) {
-                        alert(`✅ ${result.message}`);
-                        loadMemoryCollections();
-                    } else {
-                        alert(`❌ 清空失败: ${result.error || '未知错误'}`);
+        async function loadProjectMemoryData(projectId) {
+            const contentEl = document.getElementById(`memory-content-${projectId}`);
+            if (!contentEl) return;
+
+            try {
+                // 加载所有记忆库数据
+                const collections = ['world', 'characters', 'skills', 'chapters', 'foreshadowing', 'plot', 'reviews', 'discussions', 'confirmed'];
+                const memoryData = {};
+
+                for (const coll of collections) {
+                    try {
+                        const response = await fetch(`/api/memory/${projectId}/${coll}`);
+                        const result = await response.json();
+                        memoryData[coll] = result.success ? (result.documents || []) : [];
+                    } catch (e) {
+                        memoryData[coll] = [];
                     }
-                }).catch(error => alert(`❌ 请求失败: ${error.message}`));
+                }
+
+                // 缓存数据用于编辑
+                memoryEditingData[projectId] = memoryData;
+
+                // 按Stage分类显示确认后的定稿资料
+                let html = '<div style="padding:8px 12px">';
+
+                // Stage 1 - 需求确认（小说类型、核心需求）
+                const stage1Docs = memoryData['world']?.filter(d => {
+                    const title = d.title || '';
+                    return title.includes('小说类型') || title.includes('核心需求') || title.includes('题材定位') || title.includes('需求确认');
+                }) || [];
+                html += renderMemoryStage(projectId, 'Stage 1 - 需求确认', stage1Docs);
+
+                // Stage 2 - 深度调研（市场分析、榜单调研、拆文分析、创意建议）
+                const stage2Docs = memoryData['plot']?.filter(d => {
+                    const title = d.title || '';
+                    return title.includes('市场分析') || title.includes('榜单调研') || title.includes('拆文分析') || title.includes('创意建议');
+                }) || [];
+                html += renderMemoryStage(projectId, 'Stage 2 - 深度调研', stage2Docs);
+
+                // Stage 3 - 核心要素定稿（总编辑确认的各议题定稿）
+                const stage3Docs = memoryData['confirmed']?.filter(d => {
+                    const title = d.title || '';
+                    // 匹配所有议题的确认标题
+                    return title.includes('世界观确认') || title.includes('势力设定确认') ||
+                           title.includes('技能体系确认') || title.includes('等级体系确认') ||
+                           title.includes('主角设定确认') || title.includes('主要配角确认') ||
+                           title.includes('主线剧情确认') || title.includes('副本设定确认') ||
+                           title.includes('伏笔和钩子确认') || title.includes('高潮和结局确认') ||
+                           title.endsWith('确认');
+                }) || [];
+                html += renderMemoryStage(projectId, 'Stage 3 - 核心要素定稿', stage3Docs);
+
+                // Stage 4 - 设定文档（大纲文档、人物设定、世界观文档）
+                const stage4Docs = [];
+                // 大纲文档
+                const outlineDoc = memoryData['plot']?.find(d => d.title === '大纲文档');
+                if (outlineDoc) stage4Docs.push(outlineDoc);
+                // 人物设定文档
+                const charactersDoc = memoryData['characters']?.find(d => d.title === '人物设定文档');
+                if (charactersDoc) stage4Docs.push(charactersDoc);
+                // 世界观文档
+                const worldDoc = memoryData['world']?.find(d => d.title === '世界观文档');
+                if (worldDoc) stage4Docs.push(worldDoc);
+                html += renderMemoryStage(projectId, 'Stage 4 - 设定文档', stage4Docs);
+
+                // Stage 5 - 章节创作（每章的细纲/正文）
+                const stage5Docs = memoryData['chapters'] || [];
+                html += renderMemoryStage(projectId, 'Stage 5 - 章节创作', stage5Docs);
+
+                // Stage 6 - 读者反馈
+                const stage6Docs = memoryData['reviews'] || [];
+                html += renderMemoryStage(projectId, 'Stage 6 - 读者反馈', stage6Docs);
+
+                html += '</div>';
+
+                // 添加底部按钮
+                html += `
+                    <div style="padding:12px 16px;border-top:1px solid #eee;background:#fafafa;display:flex;justify-content:flex-end;gap:8px">
+                        <button onclick="closeMemoryEditor('${projectId}')" style="padding:8px 20px;background:#e0e0e0;color:#333;border:none;border-radius:4px;cursor:pointer;font-size:13px">关闭</button>
+                        <button onclick="saveMemoryProject('${projectId}')" style="padding:8px 20px;background:#4a90d9;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px">保存</button>
+                    </div>`;
+
+                contentEl.innerHTML = html;
+                contentEl.setAttribute('data-loaded', 'true');
+
+            } catch (error) {
+                contentEl.innerHTML = `<div style="padding:16px;text-align:center;color:#f56c6c;font-size:13px">加载失败: ${error.message}</div>`;
+            }
+        }
+
+        function renderMemoryStage(projectId, stageName, documents) {
+            if (!documents || documents.length === 0) {
+                return '';
+            }
+
+            const stageId = stageName.replace(/[^a-zA-Z0-9]/g, '_');
+            const docCount = documents.length;
+
+            let html = `
+                <div class="memory-stage-item" style="margin-bottom:4px">
+                    <div class="memory-stage-header" onclick="toggleMemoryStage('${projectId}', '${stageId}')" style="padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;background:#f5f5f5;border-radius:4px;user-select:none">
+                        <span class="stage-expand-icon" id="icon-${projectId}-${stageId}" style="font-size:10px;color:#888;transition:transform 0.2s">▶</span>
+                        <span style="font-size:13px;color:#444;font-weight:500">${stageName}</span>
+                        <span style="font-size:11px;color:#999;margin-left:4px">(${docCount}条)</span>
+                    </div>
+                    <div class="memory-stage-content" id="stage-${projectId}-${stageId}" style="display:none;padding:8px 0 8px 20px">`;
+
+            // 渲染文档列表
+            documents.forEach(doc => {
+                html += `
+                    <div class="memory-doc-item" data-doc-id="${doc.id}" style="border:1px solid #e8e8e8;border-radius:6px;padding:10px;margin-bottom:8px;background:white">
+                        <input type="text" class="memory-doc-title" value="${escapeHtml(doc.title || '未命名')}" data-original="${escapeHtml(doc.title || '')}"
+                            style="font-weight:600;color:#222;font-size:13px;width:100%;border:none;background:transparent;padding:2px 4px;border-radius:4px;outline:none;margin-bottom:6px" />
+                        <textarea class="memory-doc-content" data-original="${escapeHtml(doc.content || '')}"
+                            style="width:100%;min-height:80px;padding:8px;border:1px solid #e0e0e0;border-radius:4px;font-family:inherit;font-size:12px;resize:vertical">${escapeHtml(doc.content || '')}</textarea>
+                    </div>`;
+            });
+
+            html += '</div></div>';
+            return html;
+        }
+
+        function toggleMemoryStage(projectId, stageId) {
+            const contentEl = document.getElementById(`stage-${projectId}-${stageId}`);
+            const iconEl = document.getElementById(`icon-${projectId}-${stageId}`);
+
+            if (!contentEl) return;
+
+            if (contentEl.style.display === 'none') {
+                iconEl.textContent = '▼';
+                contentEl.style.display = 'block';
+            } else {
+                iconEl.textContent = '▶';
+                contentEl.style.display = 'none';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function saveMemoryProject(projectId) {
+            const contentEl = document.getElementById(`memory-content-${projectId}`);
+            if (!contentEl) return;
+
+            const docItems = contentEl.querySelectorAll('.memory-doc-item');
+            let modifiedCount = 0;
+
+            for (const item of docItems) {
+                const docId = item.getAttribute('data-doc-id');
+                const titleInput = item.querySelector('.memory-doc-title');
+                const contentTextarea = item.querySelector('.memory-doc-content');
+
+                const newTitle = titleInput.value;
+                const newContent = contentTextarea.value;
+                const originalTitle = titleInput.getAttribute('data-original');
+                const originalContent = contentTextarea.getAttribute('data-original');
+
+                // 检查是否有修改
+                if (newTitle !== originalTitle || newContent !== originalContent) {
+                    try {
+                        // 遍历所有集合找到这个文档
+                        const collections = ['world', 'characters', 'skills', 'chapters', 'foreshadowing', 'plot', 'reviews', 'discussions', 'confirmed'];
+                        for (const coll of collections) {
+                            const response = await fetch(`/api/memory/${projectId}/${coll}/${docId}`, {
+                                method: 'PUT',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    title: newTitle,
+                                    content: newContent
+                                })
+                            });
+                            const result = await response.json();
+                            if (result.success) {
+                                modifiedCount++;
+                                // 更新原始值
+                                titleInput.setAttribute('data-original', newTitle);
+                                contentTextarea.setAttribute('data-original', newContent);
+                                break;
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`保存文档 ${docId} 失败:`, error);
+                    }
+                }
+            }
+
+            if (modifiedCount > 0) {
+                alert(`✅ 资料保存完毕！共保存 ${modifiedCount} 条修改`);
+            } else {
+                alert('ℹ️ 没有修改内容');
+            }
+        }
+
+        function closeMemoryEditor(projectId) {
+            const contentEl = document.getElementById(`memory-content-${projectId}`);
+            const headerEl = contentEl?.previousElementSibling;
+            const iconEl = headerEl?.querySelector('.memory-expand-icon');
+
+            if (contentEl) {
+                contentEl.style.display = 'none';
+                if (iconEl) iconEl.textContent = '▶';
             }
         }
 
@@ -2739,7 +3336,10 @@ ${feedback}
             const dropdown = document.getElementById('char-dropdown');
             dropdown.classList.toggle('open');
             if (dropdown.classList.contains('open')) {
-                loadCharactersFromMemory().then(() => renderCharList());
+                loadCharactersFromMemory().then(() => {
+                    renderCharCards();
+                    renderManualCharList();
+                });
             }
         }
 
@@ -2751,21 +3351,559 @@ ${feedback}
             if (!e.target.closest('.char-dropdown-wrap')) closeCharDropdown();
         });
 
-        function renderCharList() {
-            const body = document.getElementById('char-list-body');
+        // 切换选项卡
+        function switchCharTab(tabName) {
+            document.querySelectorAll('.char-dropdown-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.char-dropdown-tab[data-tab="${tabName}"]`).classList.add('active');
+            document.querySelectorAll('.char-tab-content').forEach(c => c.style.display = 'none');
+            document.getElementById(`char-tab-${tabName}`).style.display = 'block';
+        }
+
+        // 计算需要的角色数量
+        function calculateCharacterCount(wordCount) {
+            if (wordCount >= 2000000) return Math.max(150, Math.floor(wordCount / 15000));
+            if (wordCount >= 1000000) return 120;
+            if (wordCount >= 500000) return 80;
+            if (wordCount >= 100000) return 40;
+            return Math.max(10, Math.floor(wordCount / 5000));
+        }
+
+        // 获取预期字数
+        function getExpectedWordCount() {
+            const requirements = document.getElementById('requirements')?.value || '';
+            const match = requirements.match(/(\d+)[万wW]/);
+            if (match) return parseInt(match[1]) * 10000;
+            const numMatch = requirements.match(/(\d+)\s*字/);
+            if (numMatch) return parseInt(numMatch[1]);
+            return 500000; // 默认50万字
+        }
+
+        // 渲染角色卡牌（按分类）
+        function renderCharCards() {
+            const container = document.getElementById('char-ai-generated-list');
+            const manualContainer = document.getElementById('char-ai-expand-list');
+
             if (characters.length === 0) {
-                body.innerHTML = '<div class="char-list-empty">暂无角色</div>';
+                container.innerHTML = '<div class="char-list-empty">暂无角色，点击上方按钮AI生成</div>';
+                manualContainer.innerHTML = '<div class="char-list-empty">暂无角色</div>';
+                return;
+            }
+
+            // 按好坏分类
+            const categories = {
+                'positive': { name: '正派角色', emoji: '😇', chars: [] },
+                'negative': { name: '反派角色', emoji: '👿', chars: [] },
+                'evil': { name: '邪派角色', emoji: '😈', chars: [] },
+                'neutral': { name: '中间派', emoji: '😐', chars: [] },
+                'special': { name: '特色人物', emoji: '✨', chars: [] }
+            };
+
+            characters.forEach((c, i) => {
+                c._idx = i;
+                const morality = c.morality || c.alignment || 'neutral';
+                if (morality.includes('正') || morality.includes('good') || morality.includes('hero')) {
+                    categories.positive.chars.push(c);
+                } else if (morality.includes('邪') || morality.includes('evil') || morality.includes('villain')) {
+                    categories.evil.chars.push(c);
+                } else if (morality.includes('反') || morality.includes('bad') || morality.includes('antagonist')) {
+                    categories.negative.chars.push(c);
+                } else if (morality.includes('特') || morality.includes('special')) {
+                    categories.special.chars.push(c);
+                } else {
+                    categories.neutral.chars.push(c);
+                }
+            });
+
+            const moralityColors = {
+                'positive': '#52c41a',
+                'negative': '#f5222d',
+                'evil': '#722ed1',
+                'neutral': '#faad14',
+                'special': '#13c2c2'
+            };
+
+            const generateCardHTML = (c) => `
+                <div class="char-card" onclick="openCharModal('view', ${c._idx})" title="点击查看完整信息">
+                    <div class="char-card-avatar" style="background: ${moralityColors[c.morality || 'neutral'] || '#fafafa'}20; color: ${moralityColors[c.morality || 'neutral'] || '#666'}">${c.emoji || '👤'}</div>
+                    <div class="char-card-name">${c.name || '未命名'}</div>
+                    <span class="char-card-role" style="background: ${moralityColors[c.morality || 'neutral'] || '#e8e8e8'}20; color: ${moralityColors[c.morality || 'neutral'] || '#666'}">${c.roleFunction || c.role || '角色'}</span>
+                    <div class="char-card-morality ${c.morality || 'neutral'}">${getMoralityLabel(c.morality)}</div>
+                </div>
+            `;
+
+            let html = '';
+            Object.entries(categories).forEach(([key, cat]) => {
+                if (cat.chars.length > 0) {
+                    html += `
+                        <div class="char-category-row">
+                            <div class="char-category-title">
+                                <span>${cat.emoji} ${cat.name}</span>
+                                <span class="char-category-count">(${cat.chars.length}人)</span>
+                            </div>
+                            <div class="char-card-grid">
+                                ${cat.chars.map(c => generateCardHTML(c)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html || '<div class="char-list-empty">暂无角色，点击上方按钮AI生成</div>';
+            manualContainer.innerHTML = html || '<div class="char-list-empty">暂无角色</div>';
+        }
+
+        function getMoralityLabel(morality) {
+            const labels = {
+                'positive': '正派',
+                'negative': '反派',
+                'evil': '邪派',
+                'neutral': '中立',
+                'special': '特色'
+            };
+            return labels[morality] || '中立';
+        }
+
+        // 渲染手动管理列表
+        function renderManualCharList() {
+            const container = document.getElementById('char-manual-list');
+            if (characters.length === 0) {
+                container.innerHTML = '<div class="char-list-empty">暂无角色，点击上方按钮创建</div>';
                 return;
             }
             const avatarColors = ['#ede9fe','#fef3c7','#dcfce7','#fee2e2','#dbeafe','#fce7f3'];
-            body.innerHTML = characters.map((c, i) => `
+            container.innerHTML = characters.map((c, i) => `
                 <div class="char-list-item" onclick="openCharModal('edit', ${i})">
                     <div class="char-list-avatar" style="background:${avatarColors[i % avatarColors.length]}">${c.emoji || '👤'}</div>
                     <div class="char-list-info">
                         <div class="char-list-name">${c.name || '未命名'}</div>
-                        <div class="char-list-meta">${c.role || '角色'} ${c.firstAppearance ? '· 第'+c.firstAppearance+'章首次出场' : ''}</div>
+                        <div class="char-list-meta">${c.roleFunction || c.role || '角色'} · ${getMoralityLabel(c.morality)} ${c.firstAppearance ? '· 第'+c.firstAppearance+'章出场' : ''}</div>
                     </div>
                 </div>`).join('');
+        }
+
+        // AI生成角色
+        // 从AI响应中提取JSON的改进函数
+        function extractJSONFromAIResponse(text) {
+            if (!text || typeof text !== 'string') {
+                console.error('输入为空或非字符串');
+                return null;
+            }
+
+            // 方法1: 尝试从markdown代码块中提取
+            const codeBlockPatterns = [
+                /```json\s*([\s\S]*?)\s*```/i,
+                /```\s*([\s\S]*?)\s*```/,
+                /`{3,}\s*([\s\S]*?)\s*`{3,}/
+            ];
+
+            for (const pattern of codeBlockPatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    const jsonStr = match[1].trim();
+                    // 验证是否是数组或以{开头
+                    if ((jsonStr.startsWith('[') && jsonStr.endsWith(']')) ||
+                        (jsonStr.startsWith('{') && jsonStr.endsWith('}'))) {
+                        console.log('从markdown代码块提取JSON');
+                        return jsonStr;
+                    }
+                }
+            }
+
+            // 方法2: 尝试找到最外层的方括号对（支持嵌套）
+            let start = text.indexOf('[');
+            if (start !== -1) {
+                let depth = 1;
+                let end = -1;
+                let inString = false;
+                let escapeNext = false;
+
+                for (let i = start + 1; i < text.length; i++) {
+                    const char = text[i];
+
+                    if (escapeNext) {
+                        escapeNext = false;
+                        continue;
+                    }
+
+                    if (char === '\\') {
+                        escapeNext = true;
+                        continue;
+                    }
+
+                    if (char === '"') {
+                        inString = !inString;
+                        continue;
+                    }
+
+                    if (!inString) {
+                        if (char === '[') depth++;
+                        else if (char === ']') {
+                            depth--;
+                            if (depth === 0) {
+                                end = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (end !== -1) {
+                    console.log('从方括号匹配提取JSON');
+                    return text.substring(start, end + 1).trim();
+                }
+            }
+
+            // 方法3: 尝试找到JSON对象
+            start = text.indexOf('{');
+            if (start !== -1) {
+                let depth = 1;
+                let end = -1;
+                let inString = false;
+                let escapeNext = false;
+
+                for (let i = start + 1; i < text.length; i++) {
+                    const char = text[i];
+
+                    if (escapeNext) {
+                        escapeNext = false;
+                        continue;
+                    }
+
+                    if (char === '\\') {
+                        escapeNext = true;
+                        continue;
+                    }
+
+                    if (char === '"') {
+                        inString = !inString;
+                        continue;
+                    }
+
+                    if (!inString) {
+                        if (char === '{') depth++;
+                        else if (char === '}') {
+                            depth--;
+                            if (depth === 0) {
+                                end = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (end !== -1) {
+                    const jsonStr = text.substring(start, end + 1).trim();
+                    // 尝试解析并查找characters字段
+                    try {
+                        const obj = JSON.parse(jsonStr);
+                        if (obj && typeof obj === 'object') {
+                            for (const key of ['characters', 'data', 'chars', 'result', 'list', 'items']) {
+                                if (Array.isArray(obj[key])) {
+                                    console.log(`从对象字段 '${key}' 提取数组`);
+                                    return JSON.stringify(obj[key]);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // 解析失败，继续其他方法
+                    }
+                }
+            }
+
+            // 方法4: 清理文本后尝试
+            let cleaned = text.trim();
+            cleaned = cleaned.replace(/^\uFEFF/, ''); // BOM
+            cleaned = cleaned.replace(/\u200b/g, ''); // 零宽空格
+
+            if (cleaned.startsWith('[') && cleaned.endsWith(']')) {
+                console.log('从清理后的文本提取JSON');
+                return cleaned;
+            }
+
+            console.error('无法从AI响应中提取有效JSON');
+            return null;
+        }
+
+        async function generateCharactersByAI(count = 1) {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            const btn1 = document.getElementById('btn-generate-1');
+            const btn10 = document.getElementById('btn-generate-10');
+            const info = document.getElementById('char-generate-info');
+            const progressDiv = document.getElementById('char-generate-progress');
+            const statusSpan = document.getElementById('char-generate-status');
+
+            // 禁用按钮
+            btn1.disabled = true;
+            btn10.disabled = true;
+            btn1.textContent = '⏳ 生成中...';
+            btn10.textContent = '⏳ 生成中...';
+
+            progressDiv.style.display = 'block';
+            info.textContent = `正在生成 ${count} 个角色，请稍候...`;
+
+            const generatedChars = [];
+            let successCount = 0;
+            let failCount = 0;
+
+            try {
+                // 获取记忆库信息
+                statusSpan.textContent = '正在读取记忆库...';
+                const worldDocs = await memoryClient.queryDocuments('world');
+                const plotDocs = await memoryClient.queryDocuments('plot');
+                const confirmedDocs = await memoryClient.queryDocuments('confirmed');
+
+                // 构建上下文
+                let context = '';
+                worldDocs.forEach(d => { if (d.title.includes('类型') || d.title.includes('需求')) context += `${d.title}: ${d.content}\n`; });
+                plotDocs.forEach(d => { if (d.title.includes('大纲') || d.title.includes('设定')) context += `${d.title}: ${d.content.substring(0, 500)}...\n`; });
+                confirmedDocs.forEach(d => { context += `${d.title}: ${d.content.substring(0, 300)}...\n`; });
+
+                if (context.length === 0) {
+                    context = '都市异能小说，主角获得系统后逆袭的故事';
+                }
+
+                const wordCount = getExpectedWordCount();
+
+                // 分批生成
+                for (let i = 0; i < count; i++) {
+                    statusSpan.textContent = `正在生成第 ${i + 1}/${count} 个角色...`;
+
+                    try {
+                        const prompt = buildCharacterPrompt(context, wordCount, generatedChars);
+
+                        const resp = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ prompt, role: 'editor' })
+                        });
+
+                        if (!resp.ok) {
+                            throw new Error(`HTTP错误: ${resp.status}`);
+                        }
+
+                        const data = await resp.json();
+                        const text = data.content || '';
+
+                        // 解析JSON
+                        const char = parseCharacterFromResponse(text);
+
+                        if (char) {
+                            // 确保有唯一ID
+                            char._tempId = Date.now() + '_' + i;
+                            generatedChars.push(char);
+                            successCount++;
+
+                            // 立即保存到记忆库并显示
+                            await saveCharToMemory(char);
+                            await loadCharactersFromMemory();
+                            renderCharCards();
+                            renderManualCharList();
+
+                            statusSpan.textContent = `已生成 ${successCount} 个角色${failCount > 0 ? `，${failCount}个失败` : ''}`;
+                        } else {
+                            failCount++;
+                            console.error(`第${i+1}个角色解析失败，AI返回:`, text);
+                        }
+                    } catch (e) {
+                        failCount++;
+                        console.error(`第${i+1}个角色生成失败:`, e);
+                    }
+
+                    // 小延迟，避免请求过快
+                    if (i < count - 1) {
+                        await new Promise(r => setTimeout(r, 500));
+                    }
+                }
+
+                info.textContent = `✅ 成功生成 ${successCount} 个角色${failCount > 0 ? `，${failCount}个失败` : ''}`;
+                progressDiv.style.display = 'none';
+
+            } catch(e) {
+                console.error('生成失败:', e);
+                alert('生成失败：' + e.message);
+                info.textContent = '生成失败，请重试';
+                progressDiv.style.display = 'none';
+            } finally {
+                btn1.disabled = false;
+                btn10.disabled = false;
+                btn1.textContent = '✨ 生成1个角色';
+                btn10.textContent = '⚡ 批量生成10个';
+            }
+        }
+
+        // 构建角色生成提示词
+        function buildCharacterPrompt(context, wordCount, existingChars) {
+            const existingNames = existingChars.map(c => c.name).join('、') || '无';
+
+            return `作为专业网文编辑，请根据以下项目设定，设计一个角色。
+
+项目背景：
+${context}
+
+预期字数: ${wordCount/10000}万字
+
+已有角色: ${existingNames}
+
+请生成一个独特的角色，不要与已有角色重复。
+
+请返回单个角色的JSON对象，包含以下字段：
+- name: 角色姓名（要求独特，不要与已有角色重复）
+- emoji: 代表emoji（根据角色性格选择）
+- roleFunction: 功能定位（如"主角-男"、"女主"、"配1"、"反1"等）
+- role: 角色类型（主角/配角/反派/龙套）
+- morality: 正邪属性（正派/反派/邪派/中间派/特色）
+- appearance: 外貌描述（50字左右）
+- personality: 性格特点（30字左右）
+- background: 背景故事（100字左右）
+- ability: 能力/修为（30字左右）
+- relations: 与其他角色的关系（可选）
+- firstAppearance: 首次出场章节（如"第1章"）
+- arc: 角色弧线/成长方向（可选）
+
+**重要**：请严格返回JSON格式，不要包含任何其他文字说明。格式示例：
+{"name":"张三","emoji":"😎","roleFunction":"主角-男","role":"主角","morality":"正派","appearance":"高大英俊...","personality":"坚毅果断","background":"出身贫寒...","ability":"系统加持","firstAppearance":"第1章"}`;
+        }
+
+        // 从AI响应中解析单个角色
+        function parseCharacterFromResponse(text) {
+            if (!text || typeof text !== 'string') {
+                return null;
+            }
+
+            // 清理文本
+            text = text.trim();
+
+            // 尝试提取JSON
+            let jsonStr = null;
+
+            // 方法1: markdown代码块
+            const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (codeBlockMatch) {
+                jsonStr = codeBlockMatch[1].trim();
+            }
+
+            // 方法2: 查找JSON对象（花括号）
+            if (!jsonStr) {
+                const start = text.indexOf('{');
+                const end = text.lastIndexOf('}');
+                if (start !== -1 && end !== -1 && end > start) {
+                    jsonStr = text.substring(start, end + 1);
+                }
+            }
+
+            // 方法3: 整个文本就是JSON
+            if (!jsonStr && text.startsWith('{') && text.endsWith('}')) {
+                jsonStr = text;
+            }
+
+            if (!jsonStr) {
+                console.error('无法提取JSON，原始文本:', text);
+                return null;
+            }
+
+            try {
+                const char = JSON.parse(jsonStr);
+
+                // 验证必要字段
+                if (!char.name) {
+                    console.error('角色缺少name字段:', char);
+                    return null;
+                }
+
+                // 设置默认值
+                char.emoji = char.emoji || '👤';
+                char.roleFunction = char.roleFunction || char.role || '角色';
+                char.morality = char.morality || 'neutral';
+
+                return char;
+            } catch (e) {
+                console.error('JSON解析失败:', e, '文本:', jsonStr);
+                return null;
+            }
+        }
+
+        // AI扩写现有角色
+        async function expandCharactersByAI() {
+            if (!memoryClient || characters.length === 0) {
+                alert('请先创建项目并已有基础角色');
+                return;
+            }
+
+            const btn = document.querySelector('#char-tab-ai-expand .char-generate-btn');
+            const origText = btn.textContent;
+            btn.textContent = '⏳ 扩写中...';
+            btn.disabled = true;
+
+            try {
+                // 获取大纲信息
+                const plotDocs = await memoryClient.queryDocuments('plot');
+                const outlineDoc = plotDocs.find(d => d.title.includes('大纲'));
+                const outline = outlineDoc ? outlineDoc.content.substring(0, 1000) : '';
+
+                // 为每个角色添加详细信息
+                const expandedChars = [];
+                for (const c of characters.slice(0, 10)) { // 一次最多处理10个
+                    const prompt = `作为专业网文编辑，请为以下角色添加更详细的设定。
+
+大纲背景：
+${outline}
+
+角色基础信息：
+- 姓名: ${c.name}
+- 当前定位: ${c.roleFunction || c.role}
+- 正邪属性: ${c.morality || '待定'}
+- 当前背景: ${c.background || '暂无'}
+
+请补充以下信息（保持JSON格式）：
+- detailedBackground: 更详细的背景故事（300字以上）
+- plotLines: 该角色的剧情线（数组，每条线包含起点、发展、高潮、结局）
+- relationships: 与其他角色的详细关系（对象，键为对方角色名，值为关系描述）
+- characterDevelopment: 角色成长/黑化轨迹
+- keyScenes: 关键场景（数组，3-5个该角色的高光时刻）
+- innerConflict: 内心冲突与矛盾
+- motivation: 行为动机和目标
+- secrets: 隐藏的秘密（可选）
+
+只返回JSON对象，包含上述字段。`;
+
+                    const resp = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt, role: 'editor' })
+                    });
+
+                    const data = await resp.json();
+                    const text = data.content || '';
+                    const match = text.match(/\{[\s\S]*\}/);
+
+                    if (match) {
+                        const expanded = JSON.parse(match[0]);
+                        const updatedChar = { ...c, ...expanded, expanded: true };
+                        await saveCharToMemory(updatedChar);
+                        expandedChars.push(updatedChar);
+                    }
+                }
+
+                await loadCharactersFromMemory();
+                renderCharCards();
+
+                alert(`✅ 成功扩写 ${expandedChars.length} 个角色`);
+            } catch(e) {
+                alert('扩写失败：' + e.message);
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        }
+
+        // 旧函数保留兼容
+        function renderCharList() {
+            renderCharCards();
+            renderManualCharList();
         }
 
         // 模态窗控制
@@ -2776,20 +3914,192 @@ ${feedback}
             const title = document.getElementById('char-modal-title');
             const selector = document.getElementById('char-method-selector');
 
+            // 隐藏所有表单区域
+            document.querySelectorAll('.char-form-section').forEach(s => s.classList.remove('active'));
+
             if (mode === 'create') {
                 title.textContent = '新建角色';
                 selector.style.display = 'grid';
-                document.querySelectorAll('.char-form-section').forEach(s => s.classList.remove('active'));
                 document.querySelectorAll('.char-method-card').forEach(c => c.classList.remove('active'));
                 currentMethod = '';
+                document.getElementById('char-detail-view').style.display = 'none';
             } else if (mode === 'edit') {
                 title.textContent = '编辑角色';
                 selector.style.display = 'none';
+                document.getElementById('char-detail-view').style.display = 'none';
                 selectCharMethod('manual');
                 loadCharToManualForm(characters[idx]);
                 document.getElementById('manual-delete-btn').style.display = 'block';
+            } else if (mode === 'view') {
+                // 查看完整信息模式
+                const c = characters[idx];
+                title.textContent = c.name || '角色详情';
+                selector.style.display = 'none';
+                document.querySelectorAll('.char-method-card').forEach(c => c.classList.remove('active'));
+                document.getElementById('char-form-manual').classList.remove('active');
+                renderCharDetailView(c);
+                document.getElementById('char-detail-view').style.display = 'block';
             }
             modal.classList.add('open');
+        }
+
+        // 渲染角色详情视图
+        function renderCharDetailView(c) {
+            const container = document.getElementById('char-detail-view');
+            const moralityLabels = { 'positive': '😇 正派', 'negative': '👿 反派', 'evil': '😈 邪派', 'neutral': '😐 中立', 'special': '✨ 特色' };
+            const moralityColors = { 'positive': '#52c41a', 'negative': '#f5222d', 'evil': '#722ed1', 'neutral': '#faad14', 'special': '#13c2c2' };
+
+            let html = `
+                <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: ${moralityColors[c.morality] || '#e8e8e8'}20; display: flex; align-items: center; justify-content: center; font-size: 40px; flex-shrink: 0;">
+                        ${c.emoji || '👤'}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">${c.name || '未命名'}</div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-size: 12px; padding: 3px 10px; border-radius: 12px; background: ${moralityColors[c.morality] || '#e8e8e8'}20; color: ${moralityColors[c.morality] || '#666'}; font-weight: 500;">${c.roleFunction || c.role || '角色'}</span>
+                            <span style="font-size: 12px; padding: 3px 10px; border-radius: 12px; background: #f0f0f0; color: #666;">${moralityLabels[c.morality] || '😐 中立'}</span>
+                            ${c.firstAppearance ? `<span style="font-size: 12px; padding: 3px 10px; border-radius: 12px; background: #e6f7ff; color: #1890ff;">第${c.firstAppearance}章出场</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 基础信息
+            html += `<div style="margin-bottom: 16px;"><div style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; border-bottom: 2px solid #e8e8e8; padding-bottom: 4px;">基础信息</div>`;
+            if (c.appearance) html += `<div style="margin-bottom: 12px;"><div style="font-size: 12px; color: #666; margin-bottom: 4px;">外貌</div><div style="font-size: 13px; color: #333; line-height: 1.6;">${c.appearance}</div></div>`;
+            if (c.personality) html += `<div style="margin-bottom: 12px;"><div style="font-size: 12px; color: #666; margin-bottom: 4px;">性格</div><div style="font-size: 13px; color: #333; line-height: 1.6;">${c.personality}</div></div>`;
+            if (c.ability) html += `<div style="margin-bottom: 12px;"><div style="font-size: 12px; color: #666; margin-bottom: 4px;">能力/修为</div><div style="font-size: 13px; color: #333; line-height: 1.6;">${c.ability}</div></div>`;
+            html += `</div>`;
+
+            // 背景故事
+            if (c.background || c.detailedBackground) {
+                html += `<div style="margin-bottom: 16px;"><div style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; border-bottom: 2px solid #e8e8e8; padding-bottom: 4px;">背景故事</div>`;
+                html += `<div style="font-size: 13px; color: #333; line-height: 1.6;">${c.detailedBackground || c.background}</div></div>`;
+            }
+
+            // 关系
+            if (c.relations) {
+                html += `<div style="margin-bottom: 16px;"><div style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; border-bottom: 2px solid #e8e8e8; padding-bottom: 4px;">人物关系</div>`;
+                html += `<div style="font-size: 13px; color: #333; line-height: 1.6;">${c.relations}</div></div>`;
+            }
+
+            // AI扩写内容
+            if (c.expanded) {
+                html += `<div style="margin-bottom: 16px;"><div style="font-size: 14px; font-weight: 600; color: #667eea; margin-bottom: 8px; border-bottom: 2px solid #667eea; padding-bottom: 4px;">AI扩写详情</div>`;
+
+                if (c.plotLines && c.plotLines.length > 0) {
+                    html += `<div style="margin-bottom: 12px;"><div style="font-size: 12px; color: #666; margin-bottom: 4px;">剧情线</div>`;
+                    c.plotLines.forEach(line => {
+                        html += `<div style="font-size: 12px; color: #333; background: #f5f3ff; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px;">${line}</div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                if (c.characterDevelopment) {
+                    html += `<div style="margin-bottom: 12px;"><div style="font-size: 12px; color: #666; margin-bottom: 4px;">成长轨迹</div><div style="font-size: 13px; color: #333; line-height: 1.6;">${c.characterDevelopment}</div></div>`;
+                }
+
+                if (c.keyScenes && c.keyScenes.length > 0) {
+                    html += `<div style="margin-bottom: 12px;"><div style="font-size: 12px; color: #666; margin-bottom: 4px;">关键场景</div>`;
+                    c.keyScenes.forEach((scene, i) => {
+                        html += `<div style="font-size: 12px; color: #333; background: #fff7e6; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px;"><strong>场景${i+1}:</strong> ${scene}</div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                if (c.innerConflict) {
+                    html += `<div style="margin-bottom: 12px;"><div style="font-size: 12px; color: #666; margin-bottom: 4px;">内心冲突</div><div style="font-size: 13px; color: #333; line-height: 1.6;">${c.innerConflict}</div></div>`;
+                }
+
+                if (c.motivation) {
+                    html += `<div style="margin-bottom: 12px;"><div style="font-size: 12px; color: #666; margin-bottom: 4px;">行为动机</div><div style="font-size: 13px; color: #333; line-height: 1.6;">${c.motivation}</div></div>`;
+                }
+
+                if (c.secrets) {
+                    html += `<div style="margin-bottom: 12px;"><div style="font-size: 12px; color: #666; margin-bottom: 4px;">隐藏秘密</div><div style="font-size: 13px; color: #f5222d; line-height: 1.6; background: #fff2f0; padding: 8px 12px; border-radius: 6px;">${c.secrets}</div></div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            // 角色弧线
+            if (c.arc) {
+                html += `<div style="margin-bottom: 16px;"><div style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; border-bottom: 2px solid #e8e8e8; padding-bottom: 4px;">角色弧线</div>`;
+                html += `<div style="font-size: 13px; color: #333; line-height: 1.6;">${c.arc}</div></div>`;
+            }
+
+            // 操作按钮
+            html += `<div style="display: flex; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e8e8e8;">`;
+            html += `<button class="btn" onclick="openCharModal('edit', ${currentCharIdx})" style="flex: 1;">✏️ 编辑</button>`;
+            html += `<button class="btn" onclick="expandSingleCharacterByAI(${currentCharIdx})" style="flex: 1; background: #667eea; color: white;">✨ AI扩写</button>`;
+            html += `</div>`;
+
+            container.innerHTML = html;
+        }
+
+        // 扩写单个角色
+        async function expandSingleCharacterByAI(idx) {
+            const c = characters[idx];
+            if (!c) return;
+
+            const btn = document.querySelector('#char-detail-view button:last-child');
+            const origText = btn.textContent;
+            btn.textContent = '⏳ 扩写中...';
+            btn.disabled = true;
+
+            try {
+                const plotDocs = await memoryClient.queryDocuments('plot');
+                const outlineDoc = plotDocs.find(d => d.title.includes('大纲'));
+                const outline = outlineDoc ? outlineDoc.content.substring(0, 1000) : '';
+
+                const prompt = `作为专业网文编辑，请为以下角色添加更详细的设定。
+
+大纲背景：
+${outline}
+
+角色基础信息：
+- 姓名: ${c.name}
+- 当前定位: ${c.roleFunction || c.role}
+- 正邪属性: ${c.morality || '待定'}
+- 当前背景: ${c.background || '暂无'}
+
+请补充以下信息（保持JSON格式）：
+- detailedBackground: 更详细的背景故事（300字以上）
+- plotLines: 该角色的剧情线（数组，每条线包含起点、发展、高潮、结局）
+- relationships: 与其他角色的详细关系
+- characterDevelopment: 角色成长/黑化轨迹
+- keyScenes: 关键场景（数组，3-5个该角色的高光时刻）
+- innerConflict: 内心冲突与矛盾
+- motivation: 行为动机和目标
+- secrets: 隐藏的秘密（可选）
+
+只返回JSON对象，包含上述字段。`;
+
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, role: 'editor' })
+                });
+
+                const data = await resp.json();
+                const text = data.content || '';
+                const match = text.match(/\{[\s\S]*\}/);
+
+                if (match) {
+                    const expanded = JSON.parse(match[0]);
+                    const updatedChar = { ...c, ...expanded, expanded: true };
+                    await saveCharToMemory(updatedChar);
+                    characters[idx] = updatedChar;
+                    renderCharDetailView(updatedChar);
+                    alert('✅ 角色扩写完成');
+                }
+            } catch(e) {
+                alert('扩写失败：' + e.message);
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
         }
 
         function closeCharModal(e) {
@@ -3155,12 +4465,24 @@ ${synopsis ? '故事梗概：' + synopsis : ''}
         }
 
         // 初始化选中状态样式
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             onPovChange();
             onChannelChange();
             onPlatformChange();
             initRoleMonitor();  // 初始化角色监控面板
             renderTopicListPreview();  // 渲染 Stage 3 议题列表预览
+
+            // 检查URL参数，如果有project参数则加载项目
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project');
+            if (projectId) {
+                try {
+                    await openProject(projectId);
+                } catch (error) {
+                    console.error('加载项目失败:', error);
+                    alert('加载项目失败: ' + error.message);
+                }
+            }
         });
 
         // 角色定义
@@ -3524,7 +4846,7 @@ ${topic.desc}
         }
 
 
-        function selectProvider(provider) {
+        async function selectProvider(provider) {
             // 高亮中间列表项
             document.querySelectorAll('.provider-list-item').forEach(i => i.classList.remove('active'));
             const listItem = document.querySelector(`.provider-list-item[data-provider="${provider}"]`);
@@ -3533,20 +4855,162 @@ ${topic.desc}
             // 隐藏所有配置面板
             document.querySelectorAll('.provider-config').forEach(c => c.style.display = 'none');
 
-            // 显示对应配置面板
-            const actualProvider = provider.startsWith('custom-') ? 'custom' : provider;
-            const panel = document.getElementById('config-' + actualProvider);
-            if (panel) panel.style.display = 'block';
-
             // 更新右侧header
-            const meta = PROVIDER_META[provider] || {name: provider, bg: '#666', text: '?'};
+            let meta = PROVIDER_META[provider];
+
+            // 如果是自定义供应商，从配置中获取名称并生成独立面板
+            if (provider.startsWith('custom-')) {
+                try {
+                    const response = await fetch('/api/model-config');
+                    const result = await response.json();
+                    if (result.success && result.data && result.data.providers) {
+                        const customConfig = result.data.providers[provider];
+                        if (customConfig && customConfig.name) {
+                            const firstChar = customConfig.name.charAt(0).toUpperCase();
+                            meta = { name: customConfig.name, bg: '#666', text: firstChar };
+
+                            // 为该供应商生成独立配置面板
+                            generateCustomProviderConfigPanel(provider, customConfig);
+                        }
+                    }
+                } catch (e) {
+                    console.log('Failed to load custom provider name:', e);
+                }
+            } else {
+                // 非自定义供应商，显示对应配置面板
+                const panel = document.getElementById('config-' + provider);
+                if (panel) panel.style.display = 'block';
+            }
+
+            // 如果没有找到 meta，使用默认值
+            if (!meta) {
+                meta = { name: provider, bg: '#666', text: '?' };
+            }
+
             const iconEl = document.getElementById('detail-icon');
             const titleEl = document.getElementById('detail-title');
             if (iconEl) { iconEl.style.background = meta.bg; iconEl.textContent = meta.text; }
             if (titleEl) titleEl.textContent = meta.name;
 
-            // 如果是添加自定义，清空表单
-            if (provider === 'custom') clearCustomProviderForm();
+            // 如果是添加自定义，清空表单并显示添加面板
+            if (provider === 'custom') {
+                clearCustomProviderForm();
+                const panel = document.getElementById('config-custom');
+                if (panel) panel.style.display = 'block';
+            }
+        }
+
+        // 为自定义供应商生成独立配置面板
+        function generateCustomProviderConfigPanel(providerId, config) {
+            const container = document.getElementById('custom-provider-configs');
+
+            // 检查是否已存在该面板
+            let panel = document.getElementById('config-' + providerId);
+            if (!panel) {
+                // 创建新的独立配置面板
+                panel = document.createElement('div');
+                panel.className = 'provider-config';
+                panel.id = 'config-' + providerId;
+
+                const apiTypeText = {
+                    'openai_compatible': 'OpenAI 兼容',
+                    'openai': 'OpenAI 原生',
+                    'claude': 'Claude'
+                }[config.api_type] || 'OpenAI 兼容';
+
+                panel.innerHTML = `
+                    <div class="config-form">
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="password" id="api-key-${providerId}" placeholder="your-api-key" value="${config.api_key || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Base URL</label>
+                            <input type="text" id="url-${providerId}" placeholder="https://api.example.com/v1" value="${config.base_url || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>API 类型</label>
+                            <input type="text" id="api-type-${providerId}" value="${apiTypeText}" disabled style="background:#f5f5f5">
+                            <input type="hidden" id="api-type-raw-${providerId}" value="${config.api_type || 'openai_compatible'}">
+                        </div>
+                        <button class="btn btn-primary" onclick="testConnection('${providerId}')">获取可用模型</button>
+                        <div class="model-list-result" id="model-list-${providerId}"></div>
+                        <div class="selected-model-input">
+                            <label>已选模型（点击上方列表选择或手动输入）</label>
+                            <input type="text" id="selected-model-${providerId}" placeholder="输入模型名称" value="${config.model || ''}">
+                        </div>
+                        <div style="margin-top:15px;display:flex;gap:10px">
+                            <button class="btn" onclick="updateCustomProvider('${providerId}')" style="flex:1;background:#409eff;color:white;font-weight:600">💾 保存修改</button>
+                            <button class="btn" onclick="deleteCustomProvider('${providerId}')" style="flex:1;background:#f56c6c;color:white">🗑️ 删除</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(panel);
+            } else {
+                // 更新已存在面板的值
+                const apiKeyInput = document.getElementById('api-key-' + providerId);
+                const urlInput = document.getElementById('url-' + providerId);
+                const modelInput = document.getElementById('selected-model-' + providerId);
+                if (apiKeyInput) apiKeyInput.value = config.api_key || '';
+                if (urlInput) urlInput.value = config.base_url || '';
+                if (modelInput) modelInput.value = config.model || '';
+            }
+
+            // 显示该面板
+            panel.style.display = 'block';
+        }
+
+        // 更新自定义供应商配置
+        async function updateCustomProvider(providerId) {
+            const apiKey = document.getElementById('api-key-' + providerId).value.trim();
+            const baseUrl = document.getElementById('url-' + providerId).value.trim();
+            const model = document.getElementById('selected-model-' + providerId).value.trim();
+
+            if (!apiKey) {
+                alert('请输入 API Key');
+                return;
+            }
+            if (!baseUrl) {
+                alert('请输入 Base URL');
+                return;
+            }
+
+            // 加载现有配置
+            let config = {};
+            try {
+                const response = await fetch('/api/model-config');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    config = result.data;
+                }
+            } catch (error) {
+                console.log('Failed to load config:', error);
+            }
+
+            // 更新提供商配置
+            if (config.providers && config.providers[providerId]) {
+                config.providers[providerId].api_key = apiKey;
+                config.providers[providerId].base_url = baseUrl;
+                config.providers[providerId].model = model;
+
+                // 保存配置
+                try {
+                    const response = await fetch('/api/model-config', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(config)
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showSaveResult(true, '✅ 提供商配置已更新');
+                    } else {
+                        showSaveResult(false, '❌ 保存失败: ' + result.error);
+                    }
+                } catch (error) {
+                    showSaveResult(false, '❌ 请求失败: ' + error.message);
+                }
+            }
         }
 
         function changeModelProvider() {
@@ -3578,7 +5042,14 @@ ${topic.desc}
                 // 对于自定义模型，根据 API 类型决定使用哪个 provider 参数
                 let actualProvider = provider;
                 if (provider === 'custom' || provider.startsWith('custom-')) {
-                    const apiType = document.getElementById('api-type-custom').value;
+                    // 尝试从动态面板获取 API 类型
+                    let apiTypeEl = document.getElementById('api-type-raw-' + provider);
+                    // 如果找不到，尝试从固定表单获取（添加新供应商时）
+                    if (!apiTypeEl) {
+                        apiTypeEl = document.getElementById('api-type-custom');
+                    }
+                    const apiType = apiTypeEl ? apiTypeEl.value : 'openai_compatible';
+
                     if (apiType === 'claude') {
                         actualProvider = 'claude';
                     } else {
@@ -3601,7 +5072,7 @@ ${topic.desc}
                 if (result.success) {
                     const models = result.models;
                     if (models.length === 0) {
-                        resultDiv.textContent = '未找到可用模型';
+                        resultDiv.innerHTML = '<div class="model-list-empty">未找到可用模型</div>';
                     } else {
                         // 获取当前已选择的模型列表
                         const selectedModelsInput = document.getElementById('selected-model-' + provider);
@@ -3609,17 +5080,29 @@ ${topic.desc}
                             ? selectedModelsInput.value.split(',').map(m => m.trim()).filter(m => m)
                             : [];
 
-                        // 添加标题和分类过滤标签
-                        let html = `<strong>找到 ${models.length} 个模型（点击 + 选择，点击 - 取消）：</strong><br>`;
+                        // 存储模型数据到 DOM，供搜索使用
+                        resultDiv.dataset.models = JSON.stringify(models);
+                        resultDiv.dataset.provider = provider;
 
-                        // 添加分类过滤按钮
-                        html += `<div style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;">
-                            <button onclick="filterModelsByType('${provider}', 'all')" class="model-filter-btn active" data-filter="all" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:#4a90d9;color:white;cursor:pointer;font-size:12px;">全部</button>
-                            <button onclick="filterModelsByType('${provider}', 'text')" class="model-filter-btn" data-filter="text" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">💬 文本</button>
-                            <button onclick="filterModelsByType('${provider}', 'vision')" class="model-filter-btn" data-filter="vision" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">👁️ 视觉</button>
-                            <button onclick="filterModelsByType('${provider}', 'embedding')" class="model-filter-btn" data-filter="embedding" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">📊 嵌入</button>
-                            <button onclick="filterModelsByType('${provider}', 'audio')" class="model-filter-btn" data-filter="audio" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">🎵 语音</button>
-                        </div>`;
+                        // 构建固定头部（搜索框 + 过滤按钮）
+                        let headerHtml = `
+                            <div class="model-list-header">
+                                <strong>找到 ${models.length} 个模型（点击 + 选择，点击 - 取消）：</strong>
+                                <div class="model-search-box">
+                                    <input type="text" id="model-search-${provider}" placeholder="搜索模型..." oninput="searchModels('${provider}')">
+                                </div>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                    <button onclick="filterModelsByType('${provider}', 'all')" class="model-filter-btn active" data-filter="all" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:#4a90d9;color:white;cursor:pointer;font-size:12px;">全部</button>
+                                    <button onclick="filterModelsByType('${provider}', 'text')" class="model-filter-btn" data-filter="text" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">💬 文本</button>
+                                    <button onclick="filterModelsByType('${provider}', 'vision')" class="model-filter-btn" data-filter="vision" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">👁️ 视觉</button>
+                                    <button onclick="filterModelsByType('${provider}', 'embedding')" class="model-filter-btn" data-filter="embedding" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">📊 嵌入</button>
+                                    <button onclick="filterModelsByType('${provider}', 'audio')" class="model-filter-btn" data-filter="audio" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">🎵 语音</button>
+                                </div>
+                            </div>
+                        `;
+
+                        // 构建内容区域
+                        let contentHtml = '<div class="model-list-content" id="model-list-content-' + provider + '">';
 
                         // 分离已选和未选模型
                         const selectedModelsList = [];
@@ -3642,20 +5125,22 @@ ${topic.desc}
 
                         // 渲染已选模型
                         if (selectedModelsList.length > 0) {
-                            html += '<div style="margin-top:10px;"><strong style="font-size:12px;color:#67c23a">✓ 已选择：</strong></div>';
-                            html += selectedModelsList.join('');
+                            contentHtml += '<div style="margin-top:10px;"><strong style="font-size:12px;color:#67c23a">✓ 已选择：</strong></div>';
+                            contentHtml += selectedModelsList.join('');
                         }
 
                         // 渲染未选模型
                         if (unselectedModelsList.length > 0) {
-                            html += '<div style="margin-top:10px;"><strong style="font-size:12px;color:#606266">可选模型：</strong></div>';
-                            html += unselectedModelsList.join('');
+                            contentHtml += '<div style="margin-top:10px;"><strong style="font-size:12px;color:#606266">可选模型：</strong></div>';
+                            contentHtml += unselectedModelsList.join('');
                         }
 
-                        resultDiv.innerHTML = html;
+                        contentHtml += '</div>';
+
+                        resultDiv.innerHTML = headerHtml + contentHtml;
                     }
                 } else {
-                    resultDiv.textContent = '❌ ' + result.error;
+                    resultDiv.innerHTML = '<div class="model-list-empty">❌ ' + result.error + '</div>';
                 }
             } catch (error) {
                 resultDiv.textContent = '❌ 请求失败: ' + error.message;
@@ -3728,14 +5213,16 @@ ${topic.desc}
             const resultDiv = document.getElementById('model-list-' + provider);
             if (!resultDiv) return;
 
+            const contentDiv = document.getElementById('model-list-content-' + provider);
+            if (!contentDiv) return;
+
             const input = document.getElementById('selected-model-' + provider);
             const selectedModels = input && input.value
                 ? input.value.split(',').map(m => m.trim()).filter(m => m)
                 : [];
 
             // 获取所有模型项
-            const allItems = Array.from(resultDiv.querySelectorAll('.model-item'));
-            const headers = Array.from(resultDiv.querySelectorAll('div > strong'));
+            const allItems = Array.from(contentDiv.querySelectorAll('.model-item'));
 
             // 分离选中和未选中的项
             const selectedItems = [];
@@ -3750,53 +5237,77 @@ ${topic.desc}
                 }
             });
 
-            // 重新构建列表
-            const fragment = document.createDocumentFragment();
+            // 找到"已选择"和"可选模型"区域的容器
+            // 查找现有的标题和容器
+            let selectedHeader = null;
+            let unselectedHeader = null;
 
-            // 添加标题
-            const firstStrong = resultDiv.querySelector('strong');
-            if (firstStrong && firstStrong.parentElement) {
-                fragment.appendChild(firstStrong.parentElement.cloneNode(true));
-            }
+            // 遍历content的子元素查找标题
+            Array.from(contentDiv.children).forEach(child => {
+                if (child.tagName === 'DIV') {
+                    const strong = child.querySelector('strong');
+                    if (strong) {
+                        if (strong.textContent.includes('已选择')) {
+                            selectedHeader = child;
+                        } else if (strong.textContent.includes('可选模型')) {
+                            unselectedHeader = child;
+                        }
+                    }
+                }
+            });
 
-            // 添加分类过滤标签
-            const filterDiv = document.createElement('div');
-            filterDiv.style.cssText = 'margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;';
-            filterDiv.innerHTML = `
-                <button onclick="filterModelsByType('${provider}', 'all')" class="model-filter-btn active" data-filter="all" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:#4a90d9;color:white;cursor:pointer;font-size:12px;">全部</button>
-                <button onclick="filterModelsByType('${provider}', 'text')" class="model-filter-btn" data-filter="text" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">文本模型</button>
-                <button onclick="filterModelsByType('${provider}', 'vision')" class="model-filter-btn" data-filter="vision" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">视觉模型</button>
-                <button onclick="filterModelsByType('${provider}', 'other')" class="model-filter-btn" data-filter="other" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:white;color:#333;cursor:pointer;font-size:12px;">其他</button>
-            `;
-            fragment.appendChild(filterDiv);
-
-            // 如果有选中的模型，添加"已选择"标题
+            // 移动选中的项到已选择区域
             if (selectedItems.length > 0) {
-                const selectedHeader = document.createElement('div');
-                selectedHeader.style.cssText = 'margin-top:10px;';
-                selectedHeader.innerHTML = '<strong style="font-size:12px;color:#67c23a">✓ 已选择：</strong>';
-                fragment.appendChild(selectedHeader);
-                selectedItems.forEach(item => fragment.appendChild(item));
+                if (selectedHeader) {
+                    selectedItems.forEach(item => {
+                        item.classList.add('selected');
+                        const btn = item.querySelector('button');
+                        if (btn) {
+                            btn.textContent = '−';
+                            btn.style.background = '#f56c6c';
+                        }
+                        // 插入到已选择标题之后
+                        selectedHeader.parentNode.insertBefore(item, selectedHeader.nextSibling);
+                    });
+                }
             }
 
-            // 添加未选中的模型
-            if (unselectedItems.length > 0) {
-                const unselectedHeader = document.createElement('div');
-                unselectedHeader.style.cssText = 'margin-top:10px;';
-                unselectedHeader.innerHTML = '<strong style="font-size:12px;color:#606266">可选模型：</strong>';
-                fragment.appendChild(unselectedHeader);
-                unselectedItems.forEach(item => fragment.appendChild(item));
+            // 移动未选中的项到可选模型区域
+            if (unselectedItems.length > 0 && unselectedHeader) {
+                unselectedItems.forEach(item => {
+                    item.classList.remove('selected');
+                    const btn = item.querySelector('button');
+                    if (btn) {
+                        btn.textContent = '+';
+                        btn.style.background = '#67c23a';
+                    }
+                    // 插入到可选模型标题之后
+                    unselectedHeader.parentNode.insertBefore(item, unselectedHeader.nextSibling);
+                });
             }
 
-            // 清空并重新添加
-            resultDiv.innerHTML = '';
-            resultDiv.appendChild(fragment);
+            // 如果没有已选择的模型，移除已选择标题
+            if (selectedItems.length === 0 && selectedHeader) {
+                selectedHeader.style.display = 'none';
+            } else if (selectedHeader) {
+                selectedHeader.style.display = 'block';
+            }
+
+            // 如果没有未选中的模型，移除可选模型标题
+            if (unselectedItems.length === 0 && unselectedHeader) {
+                unselectedHeader.style.display = 'none';
+            } else if (unselectedHeader) {
+                unselectedHeader.style.display = 'block';
+            }
         }
 
         // 按类型过滤模型
         function filterModelsByType(provider, type) {
             const resultDiv = document.getElementById('model-list-' + provider);
             if (!resultDiv) return;
+
+            const contentDiv = document.getElementById('model-list-content-' + provider);
+            if (!contentDiv) return;
 
             // 更新按钮状态
             resultDiv.querySelectorAll('.model-filter-btn').forEach(btn => {
@@ -3812,7 +5323,7 @@ ${topic.desc}
             });
 
             // 过滤模型项
-            const allItems = resultDiv.querySelectorAll('.model-item');
+            const allItems = contentDiv.querySelectorAll('.model-item');
             allItems.forEach(item => {
                 const modelType = item.dataset.modelType || 'text';
                 if (type === 'all') {
@@ -3821,6 +5332,25 @@ ${topic.desc}
                     item.style.display = (modelType !== 'text' && modelType !== 'vision') ? 'flex' : 'none';
                 } else {
                     item.style.display = (modelType === type) ? 'flex' : 'none';
+                }
+            });
+        }
+
+        // 搜索模型
+        function searchModels(provider) {
+            const searchInput = document.getElementById('model-search-' + provider);
+            const contentDiv = document.getElementById('model-list-content-' + provider);
+            if (!searchInput || !contentDiv) return;
+
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const allItems = contentDiv.querySelectorAll('.model-item');
+
+            allItems.forEach(item => {
+                const modelId = item.dataset.model || '';
+                if (searchTerm === '' || modelId.toLowerCase().includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
                 }
             });
         }
@@ -3871,17 +5401,12 @@ ${topic.desc}
         // 显示保存结果弹窗
         function showSaveResult(success, message) {
             const overlay = document.createElement('div');
-            overlay.style.cssText = `
-                position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-                z-index: 2000; display: flex; align-items: center; justify-content: center;
-            `;
+            overlay.className = 'settings-modal-overlay open';
+            overlay.style.animation = 'fadeIn 0.2s ease';
 
             const modal = document.createElement('div');
-            modal.style.cssText = `
-                background: white; border-radius: 12px; padding: 24px;
-                max-width: 400px; width: 90%; text-align: center;
-                animation: fadeIn 0.2s ease;
-            `;
+            modal.className = 'settings-modal-content';
+            modal.style.animation = 'fadeIn 0.2s ease';
 
             const icon = success ? '✅' : '❌';
             const color = success ? '#67c23a' : '#f56c6c';
@@ -3892,7 +5417,7 @@ ${topic.desc}
                     ${success ? '保存成功' : '保存失败'}
                 </div>
                 <div style="font-size: 14px; color: #666; margin-bottom: 24px;">${message}</div>
-                <button onclick="this.closest('.settings-modal-overlay').removeChild(this.closest('div'))"
+                <button onclick="this.closest('div.settings-modal-overlay').remove()"
                     style="background: #4a90d9; color: white; border: none; padding: 10px 24px;
                     border-radius: 6px; cursor: pointer; font-size: 14px;">
                     确定
@@ -3901,6 +5426,13 @@ ${topic.desc}
 
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
+
+            // 点击遮罩层关闭弹窗
+            overlay.onclick = function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            };
 
             // 3秒后自动关闭
             setTimeout(() => {
@@ -3912,8 +5444,17 @@ ${topic.desc}
 
         async function saveModelConfig() {
             const resultDiv = document.getElementById('save-config-result');
+            // 获取当前选中的 provider
             let activeProvider = document.getElementById('model-provider-select') ?
-                document.getElementById('model-provider-select').value : currentSelectedProvider;
+                document.getElementById('model-provider-select').value : null;
+
+            // 如果没有从 select 获取到，从左侧列表获取
+            if (!activeProvider) {
+                const activeListItem = document.querySelector('.provider-list-item.active');
+                if (activeListItem) {
+                    activeProvider = activeListItem.dataset.provider;
+                }
+            }
 
             // 如果选择的是"添加自定义模型"，提示用户使用添加按钮
             if (activeProvider === '__add_custom__') {
@@ -4093,8 +5634,11 @@ ${topic.desc}
                         });
                     }
 
-                    // 渲染自定义提供商列表
+                    // 渲染自定义提供商列表（右侧）
                     renderCustomProvidersList(customModels);
+
+                    // 渲染自定义提供商到左侧供应商列表
+                    renderCustomProvidersToSidebar(customModels);
 
                     // 如果当前选中的是自定义模型，加载其配置到表单
                     if (config.active_provider && config.active_provider.startsWith('custom-')) {
@@ -4155,6 +5699,19 @@ ${topic.desc}
                     toggle.checked = isEnabled;
                 }
             }
+
+            // 同步自定义供应商的开关状态
+            if (providers) {
+                for (const [providerId, config] of Object.entries(providers)) {
+                    if (providerId.startsWith('custom-')) {
+                        const toggle = document.getElementById('toggle-' + providerId);
+                        if (toggle) {
+                            const isEnabled = config && (config.api_key && config.api_key.trim() !== '' || config.model && config.model.trim() !== '');
+                            toggle.checked = isEnabled;
+                        }
+                    }
+                }
+            }
         }
 
         // 点击模态框外部关闭
@@ -4201,6 +5758,41 @@ ${topic.desc}
                 `;
             });
             listContainer.innerHTML = html;
+        }
+
+        // 将自定义提供商渲染到左侧供应商列表
+        function renderCustomProvidersToSidebar(customModels) {
+            const sidebarContainer = document.getElementById('custom-provider-list-items');
+            if (!sidebarContainer) return;
+
+            // 清空现有内容
+            sidebarContainer.innerHTML = '';
+
+            if (!customModels || customModels.length === 0) {
+                return;
+            }
+
+            // 为每个自定义提供商创建左侧列表项
+            customModels.forEach(cm => {
+                const div = document.createElement('div');
+                div.className = 'provider-list-item';
+                div.setAttribute('data-provider', cm.id);
+                div.onclick = function() { selectProvider(cm.id); };
+
+                // 获取提供商名称的首字母或 emoji
+                const firstChar = cm.name.charAt(0).toUpperCase();
+
+                div.innerHTML = `
+                    <div class="provider-list-icon" style="background:#666;color:white">${firstChar}</div>
+                    <span class="provider-list-name">${cm.name}</span>
+                    <label class="toggle-switch provider-list-toggle" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="toggle-${cm.id}" onchange="toggleProvider('${cm.id}', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                `;
+
+                sidebarContainer.appendChild(div);
+            });
         }
 
         async function addCustomProvider() {
@@ -4263,11 +5855,16 @@ ${topic.desc}
                 const result = await response.json();
 
                 if (result.success) {
-                    alert(editingProviderId ? '✅ 提供商已更新' : '✅ 提供商已添加');
+                    const isEditing = !!editingProviderId;
+                    alert(isEditing ? '✅ 提供商已更新' : '✅ 提供商已添加');
                     // 清空表单
                     clearCustomProviderForm();
                     // 重新加载配置
                     await loadModelConfig();
+                    // 如果是新添加的，自动切换到该供应商
+                    if (!isEditing) {
+                        await selectProvider(providerId);
+                    }
                 } else {
                     alert('❌ 保存失败: ' + result.error);
                 }
@@ -4277,30 +5874,8 @@ ${topic.desc}
         }
 
         async function editCustomProvider(providerId) {
-            // 加载配置
-            try {
-                const response = await fetch('/api/model-config');
-                const result = await response.json();
-                if (result.success && result.data && result.data.providers) {
-                    const provider = result.data.providers[providerId];
-                    if (provider) {
-                        document.getElementById('custom-name').value = provider.name || '';
-                        document.getElementById('api-key-custom').value = provider.api_key || '';
-                        document.getElementById('url-custom').value = provider.base_url || '';
-                        document.getElementById('selected-model-custom').value = provider.model || '';
-                        document.getElementById('api-type-custom').value = provider.api_type || 'openai_compatible';
-
-                        editingProviderId = providerId;
-                        document.getElementById('cancel-edit-btn').style.display = 'block';
-                        document.querySelector('#custom-provider-form h4').textContent = '✏️ 编辑提供商';
-
-                        // 滚动到表单
-                        document.getElementById('custom-provider-form').scrollIntoView({behavior: 'smooth'});
-                    }
-                }
-            } catch (error) {
-                alert('❌ 加载失败: ' + error.message);
-            }
+            // 选中该供应商即可，selectProvider 会动态生成独立配置面板
+            await selectProvider(providerId);
         }
 
         async function deleteCustomProvider(providerId) {
@@ -4331,8 +5906,20 @@ ${topic.desc}
                         const saveResult = await saveResponse.json();
 
                         if (saveResult.success) {
+                            // 从左侧列表中移除
+                            const sidebarItem = document.querySelector(`.provider-list-item[data-provider="${providerId}"]`);
+                            if (sidebarItem) {
+                                sidebarItem.remove();
+                            }
+                            // 移除动态生成的配置面板
+                            const configPanel = document.getElementById('config-' + providerId);
+                            if (configPanel) {
+                                configPanel.remove();
+                            }
                             alert('✅ 提供商已删除');
                             await loadModelConfig();
+                            // 切换到 claude
+                            selectProvider('claude');
                         } else {
                             alert('❌ 删除失败: ' + saveResult.error);
                         }

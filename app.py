@@ -14,6 +14,7 @@ import os
 import json
 from functools import wraps
 from pathlib import Path
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Import services
@@ -840,6 +841,26 @@ def update_project(project_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/projects/<project_id>/stage", methods=["PUT"])
+def update_project_stage(project_id):
+    """Update project current stage"""
+    data = request.json
+    if not data or "current_stage" not in data:
+        return jsonify({"success": False, "error": "缺少current_stage参数"}), 400
+
+    try:
+        project = project_manager.load_project(project_id)
+        project["current_stage"] = data["current_stage"]
+        project["updated_at"] = datetime.utcnow().isoformat() + "Z"
+        project_manager.save_project(project_id, project)
+        return jsonify({"success": True})
+    except FileNotFoundError:
+        return jsonify({"success": False, "error": "项目不存在"}), 404
+    except Exception as e:
+        logger.error(f"Failed to update project stage: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 # ==================== Memory System APIs ====================
 
 @app.route("/api/memory/<project_id>/<collection>", methods=["POST"])
@@ -913,10 +934,11 @@ def delete_memory(project_id, collection, doc_id):
     try:
         project_path = DATA_DIR / "projects" / project_id
         memory = MemoryManager(project_path)
-        data = memory._load_collection(collection)
-        data["documents"] = [d for d in data["documents"] if d["id"] != doc_id]
-        memory._save_collection(collection, data)
-        return jsonify({"success": True})
+        success = memory.delete_document(collection, doc_id)
+        if success:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Document not found"}), 404
     except Exception as e:
         logger.error(f"Failed to delete memory: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
@@ -1282,20 +1304,60 @@ def import_memory_collection(project_id, collection):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/ai/generate", methods=["POST"])
+def generate_ai_content():
+    """Generate AI content based on prompt"""
+    try:
+        data = request.json
+        if not data or not data.get("prompt"):
+            return jsonify({"success": False, "error": "缺少提示内容"}), 400
+
+        prompt = data["prompt"]
+        model_name = data.get("model", "claude-sonnet-4-6")
+
+        # Check if model is configured
+        if model_name not in API_MODELS:
+            return jsonify({"success": False, "error": f"模型未配置: {model_name}"}), 400
+
+        model_config = API_MODELS[model_name]
+        client = create_client(model_config)
+        messages = [{"role": "user", "content": prompt}]
+
+        if model_config.get("type") == "anthropic":
+            response = client.messages.create(
+                model=model_config["model"],
+                max_tokens=model_config.get("max_tokens", 4096),
+                messages=messages
+            )
+            content = response.content[0].text
+        else:
+            response = client.chat.completions.create(
+                model=model_config["model"],
+                messages=messages
+            )
+            content = response.choices[0].message.content
+
+        return jsonify({
+            "success": True,
+            "content": content,
+            "model": model_name
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to generate AI content: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route("/api/projects/<project_id>/memory/<collection>/clear", methods=["POST"])
 def clear_memory_collection(project_id, collection):
     """Clear all documents from a memory collection"""
     try:
         project_path = DATA_DIR / "projects" / project_id
-        collection_file = project_path / "memory" / f"{collection}.json"
-
-        if not collection_file.exists():
-            return jsonify({"success": False, "error": "集合不存在"}), 404
-
-        with open(collection_file, 'w', encoding='utf-8') as f:
-            json.dump({"documents": []}, f, ensure_ascii=False, indent=2)
-
-        return jsonify({"success": True, "message": f"集合 {collection} 已清空"})
+        memory = MemoryManager(project_path)
+        count = memory.clear_collection(collection)
+        return jsonify({"success": True, "message": f"集合 {collection} 已清空，删除 {count} 条记录"})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         logger.error(f"Failed to clear collection: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
