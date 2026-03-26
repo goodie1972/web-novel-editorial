@@ -399,6 +399,7 @@
         .btn-danger { color: #dc3545; border-color: #dc3545; background: white; }
         .btn-danger:hover { background: #dc3545; color: white; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/force-graph@3.42.0/dist/force-graph.min.js"></script>
 </head>
 <body>
     <div class="navbar">
@@ -524,9 +525,10 @@
             <div class="stage-item" data-stage="2" onclick="showStage(2)">2. 深度调研</div>
             <div class="stage-item" data-stage="3" onclick="showStage(3)">3. 项目讨论会</div>
             <div class="stage-item" data-stage="4" onclick="showStage(4)">4. 基础设定</div>
-            <div class="stage-item" data-stage="5" onclick="showStage(5)">5. 章节创作</div>
-            <div class="stage-item" data-stage="6" onclick="showStage(6)">6. 读者反馈</div>
-            <div class="stage-item" data-stage="7" onclick="showStage(7)">7. 终审交付</div>
+            <div class="stage-item" data-stage="5" onclick="showStage(5)">5. 角色设定</div>
+            <div class="stage-item" data-stage="6" onclick="showStage(6)">6. 章节创作</div>
+            <div class="stage-item" data-stage="7" onclick="showStage(7)">7. 读者反馈</div>
+            <div class="stage-item" data-stage="8" onclick="showStage(8)">8. 终审交付</div>
         </div>
 
         <div class="content">
@@ -813,10 +815,59 @@
                 </div>
             </div>
 
-            <!-- Stage 5: 章节创作 -->
+            <!-- Stage 5: 角色设定 -->
             <div id="stage-5" class="stage-content" style="display:none;">
                 <div class="card">
-                    <h2>阶段五：章节创作</h2>
+                    <h2>阶段五：角色设定</h2>
+                    <div class="info-box">
+                        <strong>目标：</strong>基于Stage 3的人物设定，建立角色关系图谱
+                    </div>
+
+                    <div style="display:flex; gap:16px; margin-bottom:16px;">
+                        <button class="btn" onclick="generateCharacterFramework()">🎨 AI生成角色框架</button>
+                        <button class="btn" style="background:#67c23a" onclick="saveCharacterGraph()">💾 保存关系图</button>
+                    </div>
+
+                    <div class="character-graph-container" style="display:flex; height:600px; gap:16px;">
+                        <!-- 左侧：关系图谱 -->
+                        <div class="graph-canvas-wrapper" style="flex:2; background:#0f172a; border-radius:8px; position:relative; overflow:hidden;">
+                            <div id="character-graph" style="width:100%; height:100%;"></div>
+                            <div class="graph-legend" style="position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.7); padding:10px; border-radius:6px; color:white; font-size:12px;">
+                                <div style="margin-bottom:4px;"><span style="color:#f472b6;">●</span> 恋人/道侣</div>
+                                <div style="margin-bottom:4px;"><span style="color:#38bdf8;">●</span> 师徒/引路</div>
+                                <div style="margin-bottom:4px;"><span style="color:#ef4444;">●</span> 宿敌/敌对</div>
+                                <div style="margin-bottom:4px;"><span style="color:#4ade80;">●</span> 兄弟/挚友</div>
+                                <div style="margin-bottom:4px;"><span style="color:#eab308;">●</span> 亲人/血缘</div>
+                                <div><span style="color:#a855f7;">●</span> 从属/下属</div>
+                            </div>
+                        </div>
+
+                        <!-- 右侧：角色列表 -->
+                        <div class="character-list-panel" style="flex:1; background:white; border-radius:8px; padding:16px; overflow-y:auto;">
+                            <h3 style="margin-bottom:12px; font-size:14px;">角色列表</h3>
+                            <div id="stage5-character-list" style="display:flex; flex-direction:column; gap:8px;">
+                                <!-- 动态生成 -->
+                            </div>
+                            <button class="btn" style="width:100%; margin-top:12px; background:#f0f0f0; color:#333;" onclick="addManualCharacter()">+ 手动添加角色</button>
+                        </div>
+                    </div>
+
+                    <!-- 角色卡片弹窗 -->
+                    <div id="character-card" class="character-card" style="display:none; position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; padding:14px 22px; border-radius:14px; border:1px solid #334155; box-shadow:0 8px 30px rgba(0,0,0,0.3); z-index:99; min-width:260px; text-align:center;">
+                        <div id="card-name" style="font-size:18px; font-weight:bold; margin-bottom:6px;"></div>
+                        <div id="card-desc" style="font-size:13px; color:#cbd5e1;"></div>
+                        <div style="margin-top:10px; display:flex; gap:8px; justify-content:center;">
+                            <button class="btn" style="padding:6px 12px; font-size:12px;" onclick="editCharacter()">编辑</button>
+                            <button class="btn" style="padding:6px 12px; font-size:12px; background:#f56c6c;" onclick="deleteCharacter()">删除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage 6: 章节创作 -->
+            <div id="stage-6" class="stage-content" style="display:none;">
+                <div class="card">
+                    <h2>阶段六：章节创作</h2>
                     <div class="info-box">
                         <strong>规则：</strong>每5章一批，写手创作 → 编辑审核 → 总编确认
                     </div>
@@ -851,19 +902,19 @@
 
                     <div class="form-group" style="margin-top: 16px;">
                         <label>章节内容预览</label>
-                        <div class="output-area" id="stage5-output">选择章节开始创作...</div>
+                        <div class="output-area" id="stage6-output">选择章节开始创作...</div>
                     </div>
 
                     <div style="margin-top: 16px;">
-                        <button class="btn" onclick="completeStage5()">完成本批次，进入读者反馈</button>
+                        <button class="btn" onclick="completeStage6()">完成本批次，进入读者反馈</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Stage 6: 读者反馈 -->
-            <div id="stage-6" class="stage-content" style="display:none;">
+            <!-- Stage 7: 读者反馈 -->
+            <div id="stage-7" class="stage-content" style="display:none;">
                 <div class="card">
-                    <h2>阶段六：读者反馈</h2>
+                    <h2>阶段七：读者反馈</h2>
                     <div class="info-box">
                         <strong>触发：</strong>每20章收集一次读者反馈，调整创作方向
                     </div>
@@ -886,17 +937,17 @@
 
                     <div class="form-group">
                         <label>AI分析结果</label>
-                        <div class="output-area" id="stage6-output">等待分析...</div>
+                        <div class="output-area" id="stage7-output">等待分析...</div>
                     </div>
 
-                    <button class="btn" onclick="completeStage6()">完成反馈分析，继续创作</button>
+                    <button class="btn" onclick="completeStage7()">完成反馈分析，继续创作</button>
                 </div>
             </div>
 
-            <!-- Stage 7: 终审交付 -->
-            <div id="stage-7" class="stage-content" style="display:none;">
+            <!-- Stage 8: 终审交付 -->
+            <div id="stage-8" class="stage-content" style="display:none;">
                 <div class="card">
-                    <h2>阶段七：终审交付</h2>
+                    <h2>阶段八：终审交付</h2>
                     <div class="info-box">
                         <strong>最后一步：</strong>全文审核、质量检查、准备交付
                     </div>
@@ -914,7 +965,7 @@
                     </div>
 
                     <button class="btn" onclick="runQualityCheck()">运行质量检查</button>
-                    <button class="btn btn-success" onclick="completeStage7()" style="margin-left: 8px;">确认交付</button>
+                    <button class="btn btn-success" onclick="completeStage8()" style="margin-left: 8px;">确认交付</button>
                 </div>
             </div>
         </div>
@@ -1442,6 +1493,11 @@
 
             const stageContent = document.getElementById('stage-' + num);
             if (stageContent) stageContent.style.display = 'block';
+
+            // Stage 5 特殊处理：初始化角色图谱
+            if (num === 5) {
+                onStage5Show();
+            }
         }
 
         async function completeStage1() {
@@ -2174,7 +2230,7 @@ ${analysis}
             }
 
             document.querySelector('.stage-item[data-stage="4"]').classList.add('completed');
-            alert('✅ 阶段四完成！进入阶段五：章节创作');
+            alert('✅ 阶段四完成！进入阶段五：角色设定');
             showStage(5);
         }
 
@@ -2209,7 +2265,7 @@ ${analysis}
                 }
                 // 保存当前阶段状态为 stage 5（下次从 stage 5 开始）
                 await memoryClient.setProjectStage(5);
-                alert(`✅ 已保存 ${savedCount} 项设定文档到记忆库，下次进入将是阶段五`);
+                alert(`✅ 已保存 ${savedCount} 项设定文档到记忆库，下次进入将是阶段五（角色设定）`);
             } catch (error) {
                 alert('保存失败: ' + error.message);
                 console.error('保存设定文档失败:', error);
@@ -2226,51 +2282,58 @@ ${analysis}
             addRoleLog('editor', '📝 编辑开始生成大纲文档...', 'info', 'pending');
 
             try {
-                // 从记忆库读取Stage 1资料
-                const worldDocs = await memoryClient.queryDocuments('world');
-                let stage1Context = '';
-                worldDocs.forEach(doc => {
-                    if (doc.title.includes('小说类型') || doc.title.includes('核心需求')) {
-                        stage1Context += `\n【${doc.title}】\n${doc.content}\n`;
-                    }
-                });
-
-                // 从记忆库读取Stage 2资料
-                const plotDocs = await memoryClient.queryDocuments('plot');
-                let stage2Context = '';
-                plotDocs.forEach(doc => {
-                    if (doc.title.includes('市场分析') || doc.title.includes('榜单调研') ||
-                        doc.title.includes('拆文分析') || doc.title.includes('创意建议')) {
-                        stage2Context += `\n【${doc.title}】\n${doc.content.substring(0, 500)}...\n`;
-                    }
-                });
-
-                // 从记忆库读取Stage 3核心要素定稿
+                // 从记忆库读取Stage 3核心要素定稿（大纲需要：主线剧情+副本设定+伏笔钩子+高潮结局）
                 const confirmedDocs = await memoryClient.queryDocuments('confirmed');
-                let stage3Context = '';
+                let mainplotContext = '';
+                let dungeonsContext = '';
+                let foreshadowingContext = '';
+                let climaxContext = '';
+
                 confirmedDocs.forEach(doc => {
-                    stage3Context += `\n【${doc.title}】\n${doc.content}\n`;
+                    // 主线剧情（第7项）
+                    if (doc.title.includes('主线剧情')) {
+                        mainplotContext += `\n【主线剧情】\n${doc.content}\n`;
+                    }
+                    // 副本设定（第8项）
+                    else if (doc.title.includes('副本设定')) {
+                        dungeonsContext += `\n【副本设定】\n${doc.content}\n`;
+                    }
+                    // 伏笔和钩子（第9项）
+                    else if (doc.title.includes('伏笔和钩子')) {
+                        foreshadowingContext += `\n【伏笔和钩子】\n${doc.content}\n`;
+                    }
+                    // 高潮和结局（第10项）
+                    else if (doc.title.includes('高潮和结局')) {
+                        climaxContext += `\n【高潮和结局】\n${doc.content}\n`;
+                    }
                 });
 
-                let elementsContext = '';
-                if (stage1Context) elementsContext += `=== Stage 1 需求确认 ===${stage1Context}\n`;
-                if (stage2Context) elementsContext += `=== Stage 2 深度调研 ===${stage2Context}\n`;
-                if (stage3Context) elementsContext += `=== Stage 3 核心要素定稿 ===${stage3Context}\n`;
+                let elementsContext = '=== Stage 3 核心要素定稿 ===\n';
+                if (mainplotContext) elementsContext += mainplotContext;
+                if (dungeonsContext) elementsContext += dungeonsContext;
+                if (foreshadowingContext) elementsContext += foreshadowingContext;
+                if (climaxContext) elementsContext += climaxContext;
 
-                addRoleLog('editor', '📚 编辑已读取记忆库数据，准备生成大纲...', 'info', 'pending');
+                if (!mainplotContext && !dungeonsContext && !foreshadowingContext && !climaxContext) {
+                    addRoleLog('editor', '❌ 未找到大纲相关定稿（主线剧情、副本设定、伏笔钩子、高潮结局），请先完成Stage 3的讨论', 'error', 'error');
+                    return;
+                }
 
-                const prompt = `作为编辑，基于以下已确认的项目资料，编写完整的小说大纲：
+                addRoleLog('editor', '📚 编辑已读取大纲相关数据（主线+副本+伏笔+高潮），准备生成...', 'info', 'pending');
+
+                const prompt = `作为编辑，基于以下Stage 3讨论定稿，编写完整的小说大纲文档：
 
 ${elementsContext}
 
 请输出：
 1. 全书结构（分卷规划）
-2. 主线剧情发展（起承转合）
-3. 重要章节节点（每10章的关键事件）
-4. 伏笔埋设与回收计划
-5. 高潮章节安排
+2. 主线剧情发展（起承转合，融合主线剧情定稿）
+3. 副本安排（融入副本设定）
+4. 重要章节节点（每10章的关键事件）
+5. 伏笔埋设与回收计划（基于伏笔钩子定稿）
+6. 高潮章节安排（基于高潮结局定稿）
 
-要求：基于已确认的核心要素定稿，逻辑严密、节奏合理、爽点密集。`;
+要求：整合主线剧情、副本设定、伏笔钩子和高潮结局四项定稿，逻辑严密、节奏合理、爽点密集。`;
 
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -2370,37 +2433,58 @@ ${elementsContext}
             addRoleLog('editor', '📝 编辑开始生成世界观文档...', 'info', 'pending');
 
             try {
-                // 从记忆库读取Stage 3世界观相关定稿
+                // 从记忆库读取Stage 3核心要素定稿（世界观需要：世界观+势力设定+等级体系+技能体系）
                 const confirmedDocs = await memoryClient.queryDocuments('confirmed');
-                let elementsContext = '';
+                let worldContext = '';
+                let factionsContext = '';
+                let levelsContext = '';
+                let skillsContext = '';
+
                 confirmedDocs.forEach(doc => {
-                    if (doc.title.includes('世界观') || doc.title.includes('等级') ||
-                        doc.title.includes('技能') || doc.title.includes('势力') ||
-                        doc.title.includes('主线') || doc.title.includes('副本')) {
-                        elementsContext += `\n【${doc.title}】\n${doc.content}\n`;
+                    // 世界观（第1项）
+                    if (doc.title === '世界观确认' || doc.title === '世界观定稿') {
+                        worldContext += `\n【世界观】\n${doc.content}\n`;
+                    }
+                    // 势力设定（第2项）
+                    else if (doc.title === '势力设定确认' || doc.title === '势力设定定稿') {
+                        factionsContext += `\n【势力设定】\n${doc.content}\n`;
+                    }
+                    // 等级体系（第4项）- 注意：技能体系是第3项，等级体系是第4项
+                    else if (doc.title.includes('等级体系')) {
+                        levelsContext += `\n【等级体系】\n${doc.content}\n`;
+                    }
+                    // 技能体系（第3项）
+                    else if (doc.title.includes('技能体系')) {
+                        skillsContext += `\n【技能体系】\n${doc.content}\n`;
                     }
                 });
 
-                if (!elementsContext) {
-                    addRoleLog('editor', '❌ 未找到世界观相关定稿，请先完成Stage 3的讨论', 'error', 'error');
+                let elementsContext = '=== Stage 3 核心要素定稿 ===\n';
+                if (worldContext) elementsContext += worldContext;
+                if (factionsContext) elementsContext += factionsContext;
+                if (levelsContext) elementsContext += levelsContext;
+                if (skillsContext) elementsContext += skillsContext;
+
+                if (!worldContext && !factionsContext && !levelsContext && !skillsContext) {
+                    addRoleLog('editor', '❌ 未找到世界观相关定稿（世界观、势力设定、等级体系、技能体系），请先完成Stage 3的讨论', 'error', 'error');
                     return;
                 }
 
-                addRoleLog('editor', '📚 编辑已读取世界观数据，准备生成世界观文档...', 'info', 'pending');
+                addRoleLog('editor', '📚 编辑已读取世界观相关数据（世界观+势力+等级+技能），准备生成...', 'info', 'pending');
 
-                const prompt = `基于以下已确认的世界观要素定稿，编写完整的世界观设定文档：
+                const prompt = `作为编辑，基于以下Stage 3讨论定稿，编写完整的世界观设定文档：
 
 ${elementsContext}
 
 请输出：
-1. 世界背景（时代、地理、历史）
-2. 等级体系（详细的等级划分、突破条件）
-3. 力量体系（修炼方法、技能分类）
-4. 势力分布（各大势力、实力对比、地盘）
+1. 世界背景（时代、地理、历史，基于世界观定稿）
+2. 等级体系（详细的等级划分、突破条件，基于等级体系定稿）
+3. 力量体系（修炼方法、技能分类，基于技能体系定稿）
+4. 势力分布（各大势力、实力对比、地盘，基于势力设定定稿）
 5. 资源体系（货币、宝物、材料）
 6. 规则设定（世界法则、限制条件）
 
-要求：基于已确认的定稿，体系完整、逻辑自洽、易于扩展。`;
+要求：整合世界观、势力设定、等级体系和技能体系四项定稿，体系完整、逻辑自洽、易于扩展。`;
 
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -2428,7 +2512,7 @@ ${elementsContext}
                 return;
             }
 
-            const outputArea = document.getElementById('stage5-output');
+            const outputArea = document.getElementById('stage6-output');
             outputArea.textContent = `正在创作第${num}章...`;
             addRoleLog('writer', `📝 正在读取记忆库中的设定资料...`, 'info', 'pending');
 
@@ -2526,12 +2610,322 @@ ${num === 1 ? '这是第一章，需要：\n- 快速引入主角\n- 展示初始
         }
 
         async function completeStage5() {
+            // Stage 5 完成：保存角色关系图到记忆库
+            if (memoryClient) {
+                try {
+                    await memoryClient.setProjectStage(6);
+                } catch (error) {
+                    console.error('保存角色设定失败:', error);
+                }
+            }
             document.querySelector('.stage-item[data-stage="5"]').classList.add('completed');
-            alert('✅ 阶段五完成！进入阶段六：读者反馈');
+            alert('✅ 阶段五完成！进入阶段六：章节创作');
             showStage(6);
         }
 
+        // ===== Stage 5: 角色关系图谱 =====
+        let characterGraph = null;
+        let characterGraphData = { nodes: [], links: [] };
+
+        // 关系类型配置
+        const RELATIONSHIP_TYPES = {
+            lover: { label: '恋人/道侣', color: '#f472b6' },
+            master: { label: '师徒/引路', color: '#38bdf8' },
+            enemy: { label: '宿敌/敌对', color: '#ef4444' },
+            friend: { label: '兄弟/挚友', color: '#4ade80' },
+            family: { label: '亲人/血缘', color: '#eab308' },
+            subordinate: { label: '从属/下属', color: '#a855f7' }
+        };
+
+        // 初始化角色关系图谱
+        function initCharacterGraph() {
+            const elem = document.getElementById('character-graph');
+            if (!elem) return;
+
+            // 清空画布
+            elem.innerHTML = '';
+
+            characterGraph = ForceGraph()(elem)
+                .graphData(characterGraphData)
+                .backgroundColor('#0f172a')
+                .nodeRelSize(6)
+                .nodeVal(node => node.roleFunction === '主角' ? 8 : 5)
+                .linkWidth(2)
+                .linkColor(link => RELATIONSHIP_TYPES[link.type]?.color || '#999')
+                .linkLabel(link => RELATIONSHIP_TYPES[link.type]?.label || link.type)
+                .linkLabelColor(() => '#fff')
+                .linkLabelFontSize(10)
+                .nodeCanvasObject((node, ctx, globalScale) => {
+                    const label = node.name;
+                    const fontSize = 12 / globalScale;
+                    ctx.font = `${fontSize}px sans-serif`;
+                    const textWidth = ctx.measureText(label).width;
+                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
+
+                    // 绘制节点外圈
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, node.roleFunction === '主角' ? 10 : 7, 0, 2 * Math.PI, false);
+                    ctx.fillStyle = node.roleFunction === '主角' ? '#eab308' : '#4a90d9';
+                    ctx.fill();
+
+                    // 绘制节点内圈
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, node.roleFunction === '主角' ? 8 : 5, 0, 2 * Math.PI, false);
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fill();
+
+                    // 绘制文字背景
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + 10, bckgDimensions[0], bckgDimensions[1]);
+
+                    // 绘制文字
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(label, node.x, node.y + 10 + fontSize / 2);
+                })
+                .onNodeClick(node => {
+                    showCharacterCard(node);
+                })
+                .onBackgroundClick(() => {
+                    hideCharacterCard();
+                });
+
+            // 主角固定中心
+            const protagonist = characterGraphData.nodes.find(n => n.roleFunction === '主角');
+            if (protagonist) {
+                protagonist.fx = 0;
+                protagonist.fy = 0;
+            }
+
+            // 调整布局参数
+            characterGraph.d3Force('charge').strength(-300);
+            characterGraph.d3Force('link').distance(100);
+        }
+
+        // 显示角色卡片
+        function showCharacterCard(node) {
+            const card = document.getElementById('character-card');
+            if (!card) return;
+
+            document.getElementById('card-name').textContent = node.name;
+            document.getElementById('card-desc').textContent = `${node.roleFunction}｜${node.roleType || '角色'}`;
+            card.style.display = 'block';
+
+            // 高亮右侧列表
+            document.querySelectorAll('.character-list-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.id === node.id) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // 隐藏角色卡片
+        function hideCharacterCard() {
+            const card = document.getElementById('character-card');
+            if (card) card.style.display = 'none';
+            document.querySelectorAll('.character-list-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        // 渲染角色列表
+        function renderCharacterList() {
+            const container = document.getElementById('stage5-character-list');
+            if (!container) return;
+
+            container.innerHTML = characterGraphData.nodes.map(node => {
+                const roleEmoji = node.roleFunction === '主角' ? '🔴' :
+                                  node.roleFunction === '配角' ? '🔵' : '🟢';
+                return `
+                    <div class="character-list-item" data-id="${node.id}" onclick="focusCharacter('${node.id}')" style="padding:10px;border:1px solid #e4e7ed;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+                        <span>${roleEmoji}</span>
+                        <span style="flex:1;">${node.name}</span>
+                        <span style="font-size:12px;color:#999;">${node.roleType || ''}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 聚焦到某个角色
+        function focusCharacter(nodeId) {
+            const node = characterGraphData.nodes.find(n => n.id === nodeId);
+            if (node && characterGraph) {
+                characterGraph.centerAt(node.x, node.y, 1000);
+                characterGraph.zoom(1.5, 1000);
+                showCharacterCard(node);
+            }
+        }
+
+        // AI生成角色框架
+        async function generateCharacterFramework() {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            try {
+                // 从 Stage 3 读取人物设定
+                const confirmedDocs = await memoryClient.queryDocuments('confirmed');
+                let protagonistContext = '';
+                let supportingContext = '';
+
+                confirmedDocs.forEach(doc => {
+                    if (doc.title.includes('主角设定')) {
+                        protagonistContext = doc.content;
+                    } else if (doc.title.includes('主要配角')) {
+                        supportingContext = doc.content;
+                    }
+                });
+
+                if (!protagonistContext && !supportingContext) {
+                    alert('未找到 Stage 3 的人物设定，请先完成讨论');
+                    return;
+                }
+
+                const prompt = `基于以下人物设定，生成角色框架和关系图谱数据：
+
+【主角设定】
+${protagonistContext}
+
+【主要配角】
+${supportingContext}
+
+请生成 JSON 格式：
+{
+  "characters": [
+    {
+      "name": "角色名",
+      "roleFunction": "主角/配角/群众",
+      "roleType": "具体类型如剑修/圣女",
+      "faction": "所属势力",
+      "attributes": { "外貌": "...", "性格": "...", "背景": "...", "能力": "..." }
+    }
+  ],
+  "relationships": [
+    { "source": "角色A", "target": "角色B", "type": "lover/master/enemy/friend/family/subordinate", "label": "关系描述" }
+  ]
+}
+
+要求：
+1. 主角必须有且只有一个，固定在中心
+2. 关系类型只能是：lover(恋人)、master(师徒)、enemy(敌对)、friend(挚友)、family(亲人)、subordinate(从属)
+3. 每个角色至少有一个关系`;
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt, role: 'editor'})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    try {
+                        // 提取 JSON
+                        const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            const data = JSON.parse(jsonMatch[0]);
+                            loadCharacterGraphData(data);
+                            alert('✅ 角色框架生成成功！');
+                        }
+                    } catch (e) {
+                        console.error('解析角色数据失败:', e);
+                        alert('解析角色数据失败，请手动创建');
+                    }
+                }
+            } catch (error) {
+                console.error('生成角色框架失败:', error);
+                alert('生成失败: ' + error.message);
+            }
+        }
+
+        // 加载角色图谱数据
+        function loadCharacterGraphData(data) {
+            // 生成节点
+            characterGraphData.nodes = data.characters.map((c, idx) => ({
+                id: 'char-' + idx,
+                name: c.name,
+                roleFunction: c.roleFunction,
+                roleType: c.roleType,
+                faction: c.faction,
+                attributes: c.attributes || {},
+                fx: c.roleFunction === '主角' ? 0 : undefined,
+                fy: c.roleFunction === '主角' ? 0 : undefined
+            }));
+
+            // 生成关系
+            const nameToId = {};
+            characterGraphData.nodes.forEach(n => nameToId[n.name] = n.id);
+
+            characterGraphData.links = data.relationships
+                .filter(r => nameToId[r.source] && nameToId[r.target])
+                .map(r => ({
+                    source: nameToId[r.source],
+                    target: nameToId[r.target],
+                    type: r.type,
+                    label: r.label || RELATIONSHIP_TYPES[r.type]?.label || r.type
+                }));
+
+            initCharacterGraph();
+            renderCharacterList();
+        }
+
+        // 手动添加角色
+        function addManualCharacter() {
+            const name = prompt('角色名称：');
+            if (!name) return;
+
+            const roleFunction = prompt('角色类型（主角/配角/群众）：', '配角');
+            const roleType = prompt('角色定位（如：剑修/圣女）：', '');
+            const faction = prompt('所属势力：', '');
+
+            const newId = 'char-' + characterGraphData.nodes.length;
+            characterGraphData.nodes.push({
+                id: newId,
+                name,
+                roleFunction,
+                roleType,
+                faction,
+                attributes: {},
+                x: (Math.random() - 0.5) * 100,
+                y: (Math.random() - 0.5) * 100
+            });
+
+            initCharacterGraph();
+            renderCharacterList();
+        }
+
+        // 保存角色关系图
+        async function saveCharacterGraph() {
+            if (!memoryClient) {
+                alert('请先创建项目');
+                return;
+            }
+
+            try {
+                await memoryClient.addDocument('characters', '角色关系图谱', JSON.stringify(characterGraphData));
+                alert('✅ 角色关系图已保存到记忆库');
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+            }
+        }
+
+        // Stage 5 显示时初始化
+        function onStage5Show() {
+            if (!characterGraph) {
+                initCharacterGraph();
+                renderCharacterList();
+            }
+        }
+
         async function completeStage6() {
+            document.querySelector('.stage-item[data-stage="6"]').classList.add('completed');
+            alert('✅ 阶段六完成！进入阶段七：读者反馈');
+            showStage(7);
+        }
+
+        async function completeStage7() {
             const feedback = document.getElementById('reader-feedback').value;
             if (!feedback) {
                 alert('请填写读者反馈');
@@ -2557,9 +2951,9 @@ ${num === 1 ? '这是第一章，需要：\n- 快速引入主角\n- 展示初始
                 }
             }
 
-            document.querySelector('.stage-item[data-stage="6"]').classList.add('completed');
-            alert('✅ 阶段六完成！进入阶段七：终审交付');
-            showStage(7);
+            document.querySelector('.stage-item[data-stage="7"]').classList.add('completed');
+            alert('✅ 阶段七完成！进入阶段八：终审交付');
+            showStage(8);
         }
 
         async function generateImprovementSuggestions() {
@@ -2570,7 +2964,7 @@ ${num === 1 ? '这是第一章，需要：\n- 快速引入主角\n- 展示初始
 
             const feedback = document.getElementById('reader-feedback').value;
             const score = document.getElementById('feedback-score').value;
-            const outputArea = document.getElementById('stage6-output');
+            const outputArea = document.getElementById('stage7-output');
 
             if (!feedback) {
                 alert('请先填写读者反馈');
@@ -2749,9 +3143,9 @@ ${context}
             }
         }
 
-        async function completeStage7() {
+        async function completeStage8() {
             if (confirm('确认交付项目？')) {
-                document.querySelector('.stage-item[data-stage="7"]').classList.add('completed');
+                document.querySelector('.stage-item[data-stage="8"]').classList.add('completed');
                 alert('🎉 恭喜！项目已完成交付！');
             }
         }
